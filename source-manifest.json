@@ -1,5 +1,5 @@
 {
-  "sourceTreeSHA256": "3a306672dc64ca5307740dd811a13279771b7413a26fe0eb5cffbccd76a1c21c",
+  "sourceTreeSHA256": "7d8a0a82fa223a78cd6e5603bde1c4091a9e4862a67a45d7902056861491baa9",
   "hashScope": "sorted UTF-8 path, NUL, binary SHA-256 per listed file; manifest excluded",
   "license": "Apache-2.0",
   "deploymentVerification": "not established by this source snapshot",
@@ -106,8 +106,8 @@
     },
     {
       "path": "inference-economics.mjs",
-      "sha256": "28b66a51331ddbb67e70aa573ba7f6d4297067f368d7d28605bded80307be678",
-      "bytes": 2672
+      "sha256": "5979316ac065d1be2f70b011fbe52f3b70f6a06e143fba2639bbd9b61a95c3f7",
+      "bytes": 2784
     },
     {
       "path": "infrastructure/README.md",
