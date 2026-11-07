@@ -6,6 +6,7 @@ import {getFirestore} from 'firebase-admin/firestore';
 import {configuredAppleServices} from './apple-entitlement.js';
 import {appleNotificationHandler,firestoreNotificationRecorder} from './apple-notifications.js';
 import {firestoreAllowance,voucherIssuer} from './vouchers.js';
+import {validateIssuerCreditPolicy} from './token-budget.js';
 import {createBillingServer} from './billing-server.js';
 
 async function start() {
@@ -14,6 +15,7 @@ async function start() {
   const appIDs=JSON.parse(process.env.APP_CHECK_APP_IDS||'[]');
   if(!billingProject||!attestationProject||billingProject===attestationProject||!appIDs.length) throw new Error('billing_configuration_missing');
   const config=JSON.parse(await readFile(process.env.APPLE_CONFIGURATION_FILE,'utf8'));
+  validateIssuerCreditPolicy(config);
   const roots=await Promise.all(config.rootCertificateFiles.map(file=>readFile(file)));
   const signingKey=await readFile(process.env.APPLE_SIGNING_KEY_FILE,'utf8');
   const voucherKey=createPrivateKey(await readFile(process.env.VOUCHER_SIGNING_KEY_FILE,'utf8'));

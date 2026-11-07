@@ -28,7 +28,7 @@ async function start() {
   });
   const server=createProductionServer({
     appCheck:getAppCheck(app),allowedAppIDs:appIDs,configuration,quota,
-    generate:openAIAdapter({apiKey:(await readFile(keyFile,'utf8')).trim()}),
+    generate:openAIAdapter({apiKey:(await readFile(keyFile,'utf8')).trim(),onUsageViolation:()=>database.doc('runtime/gateway').update({enabled:false,disabledFor:'provider_usage_contract'})}),
     validateVoucher:(token,route)=>verifyVoucher(token,{publicKeys,issuer:process.env.VOUCHER_ISSUER,audience:process.env.VOUCHER_AUDIENCE,route:route.id}),
     spendVoucher:firestoreVoucherSpender(database,{publicKeys,issuer:process.env.VOUCHER_ISSUER,audience:process.env.VOUCHER_AUDIENCE}),
   });

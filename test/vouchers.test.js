@@ -23,11 +23,13 @@ test('atomic spent nonce creation rejects concurrent replay and writes only expi
 });
 test('issuer reserves allowance before signing and binds all vouchers to verified subscription window',async()=>{
  const reservations=[];
- const issuer=voucherIssuer({verifyTransaction:async()=>({active:true,expiresAt:1500,originalTransactionID:'PRIVATE_TRANSACTION'}),reserve:async value=>reservations.push(value),privateKey,kid:'v1',issuer:'billing',audience:'chat',hmacKey:'test-secret',routeCosts:{terra:10},monthlyUnits:100,now:()=>1000});
+ const issuer=voucherIssuer({verifyTransaction:async()=>({active:true,expiresAt:1500,originalTransactionID:'PRIVATE_TRANSACTION',periodTransactionID:'PRIVATE_RENEWAL'}),reserve:async value=>reservations.push(value),privateKey,kid:'v1',issuer:'billing',audience:'chat',hmacKey:'test-secret',routeCosts:{terra:10},monthlyUnits:100,now:()=>1000});
  const tokens=await issuer({signedTransaction:'synthetic-signed-transaction',route:'terra',count:5});
  assert.equal(tokens.length,5);assert.equal(reservations.length,1);assert.equal(reservations[0].units,50);
  assert.match(reservations[0].ledgerID,/^[a-f0-9]{64}$/);
  assert.equal(JSON.stringify(reservations).includes('PRIVATE_TRANSACTION'),false);
+ assert.equal(JSON.stringify(reservations).includes('PRIVATE_RENEWAL'),false);
+ assert.match(reservations[0].window,/^[a-f0-9]{64}$/);
  assert.equal(new Set(tokens.map(token=>verifyVoucher(token,{...configuration,now:1001}).hash)).size,5);
  for(const token of tokens) assert.equal(verifyVoucher(token,{...configuration,now:1001}).expiresAt,1500);
  await assert.rejects(issuer({signedTransaction:'x',route:'terra',count:6}));
@@ -44,7 +46,7 @@ test('weighted route reservations share one subscription ledger across devices',
   const result=queue.then(()=>operation({get:async ref=>({exists:records.has(ref.id),data:()=>records.get(ref.id)}),set:(ref,value)=>records.set(ref.id,value)}));
   queue=result.catch(()=>{});return result;
  }};
- const options={verifyTransaction:async()=>({active:true,expiresAt:3000,originalTransactionID:'same-subscription'}),reserve:firestoreAllowance(database),privateKey,kid:'v1',issuer:'billing',audience:'chat',hmacKey:'test-secret',routeCosts:{economy:10,reasoning:30},monthlyUnits:100,now:()=>1000};
+ const options={verifyTransaction:async()=>({active:true,expiresAt:3000,originalTransactionID:'same-subscription',periodTransactionID:'same-period'}),reserve:firestoreAllowance(database),privateKey,kid:'v1',issuer:'billing',audience:'chat',hmacKey:'test-secret',routeCosts:{economy:10,reasoning:30},monthlyUnits:100,now:()=>1000};
  const deviceA=voucherIssuer(options),deviceB=voucherIssuer(options);
  await deviceA({signedTransaction:'verified',route:'reasoning',count:2});
  await deviceB({signedTransaction:'verified',route:'economy',count:4});
@@ -54,7 +56,23 @@ test('weighted route reservations share one subscription ledger across devices',
 test('concurrent weighted issuance cannot overspend and failed reservations sign nothing',async()=>{
  let reserved=0;let queue=Promise.resolve();
  const reserve=({units,limit})=>{const result=queue.then(()=>{if(reserved+units>limit)throw new Error('exhausted');reserved+=units;});queue=result.catch(()=>{});return result;};
- const issuer=voucherIssuer({verifyTransaction:async()=>({active:true,expiresAt:3000,originalTransactionID:'subscription'}),reserve,privateKey,kid:'v1',issuer:'billing',audience:'chat',hmacKey:'test-secret',routeCosts:{terra:30},monthlyUnits:100,now:()=>1000});
+ const issuer=voucherIssuer({verifyTransaction:async()=>({active:true,expiresAt:3000,originalTransactionID:'subscription',periodTransactionID:'same-period'}),reserve,privateKey,kid:'v1',issuer:'billing',audience:'chat',hmacKey:'test-secret',routeCosts:{terra:30},monthlyUnits:100,now:()=>1000});
  const results=await Promise.allSettled(Array.from({length:20},()=>issuer({signedTransaction:'verified',route:'terra'})));
  assert.equal(results.filter(result=>result.status==='fulfilled').length,3);assert.equal(reserved,90);
+});
+
+test('calendar rollover cannot replenish paid allowance; a verified renewal can',async()=>{
+ const records=new Map();
+ const database={collection:name=>({doc:id=>({id})}),runTransaction:async operation=>operation({get:async ref=>({exists:records.has(ref.id),data:()=>records.get(ref.id)}),set:(ref,value)=>records.set(ref.id,value)})};
+ let timestamp=Date.parse('2026-12-31T23:59:00Z')/1000,period='PRIVATE_PERIOD_ONE';
+ const options={verifyTransaction:async()=>({active:true,expiresAt:timestamp+3600,originalTransactionID:'PRIVATE_SUBSCRIPTION',periodTransactionID:period}),reserve:firestoreAllowance(database),privateKey,kid:'v1',issuer:'billing',audience:'chat',hmacKey:'test-secret',routeCosts:{terra:100},monthlyUnits:100,now:()=>timestamp};
+ const issuer=voucherIssuer(options);
+ await issuer({signedTransaction:'verified',route:'terra'});
+ timestamp+=120; // January 1, same paid renewal transaction.
+ await assert.rejects(issuer({signedTransaction:'verified',route:'terra'}),error=>error.code==='allowance_exhausted');
+ assert.equal(records.size,1);
+ period='PRIVATE_PERIOD_TWO';
+ await issuer({signedTransaction:'verified',route:'terra'});
+ assert.equal(records.size,2);
+ assert.equal(JSON.stringify([...records]).includes('PRIVATE_'),false);
 });

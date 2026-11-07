@@ -14,13 +14,13 @@ test('provider adapter sends one request, translates deltas, and cancels reader'
  let calls=0;
  const adapter=openAIAdapter({apiKey:'test-only',fetchImpl:async(url,options)=>{
   calls++;assert.equal(url,'https://api.openai.com/v1/responses');assert.equal(options.redirect,'error');
-  return new Response('data: {"type":"response.created","response":{"model":"gpt-5.6-terra"}}\n\ndata: {"type":"response.output_text.delta","delta":"hello"}\n\ndata: {"type":"response.completed","response":{"model":"gpt-5.6-terra"}}\n\n');
+  return new Response('data: {"type":"response.created","response":{"model":"gpt-5.6-terra"}}\n\ndata: {"type":"response.output_text.delta","delta":"hello"}\n\ndata: {"type":"response.completed","response":{"model":"gpt-5.6-terra","usage":{"input_tokens":100,"output_tokens":5,"total_tokens":105,"input_tokens_details":{"cached_tokens":0,"cache_write_tokens":0},"output_tokens_details":{"reasoning_tokens":0}}}}\n\n');
  }});
  const events=[];for await(const e of adapter(route,input,new AbortController().signal)) events.push(e);
  assert.equal(calls,1);assert.deepEqual(events,[{type:'delta',text:'hello'},{type:'done',reason:'stop'}]);
 });
 test('provider stream handles CRLF and split UTF-8 without forwarding metadata',async()=>{
- const wire=Buffer.from(': heartbeat\r\n\r\ndata: {"type":"response.created","response":{"model":"gpt-5.6-terra","id":"PRIVATE_ID"}}\r\n\r\ndata: {"type":"response.output_text.delta","delta":"🌱"}\r\n\r\ndata: {"type":"response.completed","response":{"model":"gpt-5.6-terra"}}\r\n\r\n');
+ const wire=Buffer.from(': heartbeat\r\n\r\ndata: {"type":"response.created","response":{"model":"gpt-5.6-terra","id":"PRIVATE_ID"}}\r\n\r\ndata: {"type":"response.output_text.delta","delta":"🌱"}\r\n\r\ndata: {"type":"response.completed","response":{"model":"gpt-5.6-terra","usage":{"input_tokens":100,"output_tokens":5,"total_tokens":105,"input_tokens_details":{"cached_tokens":0,"cache_write_tokens":0},"output_tokens_details":{"reasoning_tokens":0}}}}\r\n\r\n');
  const stream=new ReadableStream({start(controller){for(const byte of wire)controller.enqueue(Uint8Array.of(byte));controller.close();}});
  const adapter=openAIAdapter({apiKey:'test-only',fetchImpl:async()=>new Response(stream)});
  const events=[];for await(const event of adapter(route,input,new AbortController().signal))events.push(event);

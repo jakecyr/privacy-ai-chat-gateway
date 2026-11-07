@@ -91,3 +91,13 @@ test('Apple notifications bypass app attestation but require strict signed-only 
   assert.equal((await post(origin,{signedPayload:'valid'},'/v1/apple/notifications')).status,200);
   assert.equal(verifies,2);
 });
+
+test('model token limit rejects a wire-valid request before quota, voucher spending or generation',async t=>{
+  let quota=0,spent=0,generated=0;
+  const server=createProductionServer({...defaults(),quota:{take:async()=>quota++},spendVoucher:async()=>spent++,generate:async function*(){generated++;yield {type:'done',reason:'stop'}}});
+  const value={...body,messages:[{role:'user',text:'\x7f'.repeat(32500)}]};
+  assert.ok(Buffer.byteLength(JSON.stringify(value))<32768);
+  const response=await post(await listen(server,t),value);
+  assert.equal(response.status,413);assert.deepEqual(await response.json(),{error:'input_limit'});
+  assert.equal(quota,0);assert.equal(spent,0);assert.equal(generated,0);
+});

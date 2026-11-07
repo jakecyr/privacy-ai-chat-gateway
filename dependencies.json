@@ -1274,6 +1274,14 @@
       "optional": true
     },
     {
+      "name": "tiktoken",
+      "version": "1.0.22",
+      "license": "MIT",
+      "resolved": "https://registry.npmjs.org/tiktoken/-/tiktoken-1.0.22.tgz",
+      "integrity": "sha512-PKvy1rVF1RibfF3JlXBSP0Jrcw2uq3yXdgcEXtKTYn3QJ/cBRBHDnrJ5jHky+MENZ6DIPwNUGWpkVx+7joCpNA==",
+      "optional": false
+    },
+    {
       "name": "tr46",
       "version": "0.0.3",
       "license": "MIT",

@@ -42,7 +42,7 @@ export function billingLedgerID(originalTransactionID,hmacKey) {
 // Lives only in the billing project. Call after authoritative transaction verification.
 export function firestoreAllowance(database) {
   return async ({ledgerID,window,units,limit}) => database.runTransaction(async tx=>{
-    if(!/^[a-f0-9]{64}$/.test(ledgerID) || !/^\d{4}-\d{2}$/.test(window) || !Number.isSafeInteger(units) || units<1 || units>10000000 || !Number.isSafeInteger(limit) || limit<units) throw new GatewayError(400,'invalid_allowance');
+    if(!/^[a-f0-9]{64}$/.test(ledgerID) || !/^[a-f0-9]{64}$/.test(window) || !Number.isSafeInteger(units) || units<1 || units>10000000 || !Number.isSafeInteger(limit) || limit<units) throw new GatewayError(400,'invalid_allowance');
     const reference=database.collection('allowances').doc(`${ledgerID}-${window}`);
     const record=await tx.get(reference);const reserved=record.exists?record.data().reserved:0;
     if(!Number.isSafeInteger(reserved)||reserved<0) throw new GatewayError(503,'allowance_unavailable');
@@ -58,9 +58,11 @@ export function voucherIssuer({verifyTransaction,reserve,privateKey,kid,issuer,a
     // The verifier owns chain, app, product, environment, renewal and revocation checks.
     const entitlement=await verifyTransaction(signedTransaction);
     const timestamp=now();
-    if(!entitlement?.active || !Number.isSafeInteger(entitlement.expiresAt)||entitlement.expiresAt<=timestamp || !entitlement.originalTransactionID) throw new GatewayError(403,'subscription_inactive');
+    if(!entitlement?.active || !Number.isSafeInteger(entitlement.expiresAt)||entitlement.expiresAt<=timestamp || !entitlement.originalTransactionID || typeof entitlement.periodTransactionID!=='string' || !entitlement.periodTransactionID.length || entitlement.periodTransactionID.length>256) throw new GatewayError(403,'subscription_inactive');
     const ledgerID=billingLedgerID(entitlement.originalTransactionID,hmacKey);
-    const window=new Date(timestamp*1000).toISOString().slice(0,7);
+    // The current Apple renewal transaction owns the allowance window. Calendar
+    // boundaries, restore and grace-period extensions cannot mint an extra pool.
+    const window=billingLedgerID('period:'+entitlement.periodTransactionID,hmacKey);
     await reserve({ledgerID,window,units:count*costs[route],limit:monthlyUnits});
     const expiresAt=Math.min(timestamp+3600,entitlement.expiresAt);
     // Lost issuer responses waste reserved allowance. Never issue replacement vouchers speculatively.

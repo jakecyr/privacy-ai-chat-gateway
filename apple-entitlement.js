@@ -16,6 +16,9 @@ export function appleEntitlementVerifier({verifier,api,bundleID,productIDs,envir
         if (![1,4].includes(item.status) || !item.signedTransactionInfo) continue;
         const current=check(await verifier.verifyAndDecodeTransaction(item.signedTransactionInfo));
         if (current.originalTransactionId!==presented.originalTransactionId) continue;
+        if(typeof current.transactionId!=='string' || !current.transactionId.length || current.transactionId.length>256 ||
+           !Number.isSafeInteger(current.purchaseDate) || current.purchaseDate<=0 || current.purchaseDate>now() ||
+           !Number.isSafeInteger(current.expiresDate) || current.expiresDate<=current.purchaseDate) continue;
         let expiresAt=current.expiresDate;
         if(item.status===4) {
           if(!item.signedRenewalInfo) continue;
@@ -24,7 +27,7 @@ export function appleEntitlementVerifier({verifier,api,bundleID,productIDs,envir
           expiresAt=renewal.gracePeriodExpiresDate;
         }
         if(!Number.isSafeInteger(expiresAt)||expiresAt<=now()) continue;
-        return {active:true,originalTransactionID:current.originalTransactionId,expiresAt:Math.floor(expiresAt/1000)};
+        return {active:true,originalTransactionID:current.originalTransactionId,periodTransactionID:current.transactionId,expiresAt:Math.floor(expiresAt/1000)};
       }
       throw new GatewayError(403,'subscription_inactive');
     } catch(error) {
