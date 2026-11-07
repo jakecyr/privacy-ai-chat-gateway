@@ -22,9 +22,29 @@ jobs:
       - run: npm test
       - run: npm audit --omit=dev --audit-level=high
       - run: node tools/verify-source.mjs
+  firestore:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: node tools/verify-source.mjs
+      - run: npm ci --ignore-scripts
+      - name: Verify Firestore concurrency and mobile denial
+        run: |
+          mkdir -p private
+          cd private
+          npx --yes firebase-tools@15.34.2 emulators:exec --config ../infrastructure/emulator.firebase.json --project demo-private-ai-allowance --only firestore 'node --test ../integration/firestore-allowance.mjs'
+      - run: node tools/verify-source.mjs
   images:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: verify
+    needs: [verify, firestore]
     runs-on: ubuntu-latest
     permissions:
       contents: read

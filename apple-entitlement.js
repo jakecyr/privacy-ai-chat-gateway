@@ -27,7 +27,7 @@ export function appleEntitlementVerifier({verifier,api,bundleID,productIDs,envir
           expiresAt=renewal.gracePeriodExpiresDate;
         }
         if(!Number.isSafeInteger(expiresAt)||expiresAt<=now()) continue;
-        return {active:true,originalTransactionID:current.originalTransactionId,periodTransactionID:current.transactionId,expiresAt:Math.floor(expiresAt/1000)};
+        return {active:true,originalTransactionID:current.originalTransactionId,periodTransactionID:current.transactionId,periodEndsAt:Math.floor(current.expiresDate/1000),inGracePeriod:item.status===4,expiresAt:Math.floor(expiresAt/1000)};
       }
       throw new GatewayError(403,'subscription_inactive');
     } catch(error) {

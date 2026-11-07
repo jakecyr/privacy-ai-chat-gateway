@@ -1,5 +1,5 @@
 {
-  "sourceTreeSHA256": "4abd629c67d71b9d9dde8aa54f356f648d9a0d9071845f99b7db8bbc262a5b83",
+  "sourceTreeSHA256": "3a306672dc64ca5307740dd811a13279771b7413a26fe0eb5cffbccd76a1c21c",
   "hashScope": "sorted UTF-8 path, NUL, binary SHA-256 per listed file; manifest excluded",
   "license": "Apache-2.0",
   "deploymentVerification": "not established by this source snapshot",
@@ -11,8 +11,8 @@
     },
     {
       "path": ".github/workflows/verify.yml",
-      "sha256": "a9b4e4186e5ef71bc137673605d2cca325fee1a1e8dd30f0420ac3f287a6c869",
-      "bytes": 3247
+      "sha256": "a443c928a93115d0e3a020d7328110d353838702962295c8fc5107533fcf2e4e",
+      "bytes": 4148
     },
     {
       "path": ".gitignore",
@@ -46,8 +46,13 @@
     },
     {
       "path": "README.md",
-      "sha256": "3ba550dc4a0cf934591e4d999f3539a8b179d416259bf7c25197af05cf52cffa",
-      "bytes": 6515
+      "sha256": "c25a2a5f251b25a793da8ec779ee88ab4ae3666196ddfaee64f99dacb3789209",
+      "bytes": 8778
+    },
+    {
+      "path": "access-policy.js",
+      "sha256": "43c31bd982ecc85f6685cf273e65aa84523ea5b14b3c9b1ceaaf60e73cd4b77e",
+      "bytes": 816
     },
     {
       "path": "admission.js",
@@ -56,8 +61,8 @@
     },
     {
       "path": "apple-entitlement.js",
-      "sha256": "b5fc81992813c1e8227652b38d2fe673a255611ef60753e70fd36f51d31328c5",
-      "bytes": 3656
+      "sha256": "d9e7a3e14f7f0696f47dedc83bf033dab798a1f48038784bf9a20ead53167f34",
+      "bytes": 3736
     },
     {
       "path": "apple-notifications.js",
@@ -66,13 +71,13 @@
     },
     {
       "path": "billing-runtime.js",
-      "sha256": "b3cf1a5e61c2498c2907627fb153d67c6f7b94dc5f37580a141f9c5293f4d102",
-      "bytes": 2653
+      "sha256": "70dcc41d7c1edd3734603202d2cdd7c928982331e8f93150b8c7e7cfd9e6c183",
+      "bytes": 3707
     },
     {
       "path": "billing-server.js",
-      "sha256": "f8b9d065be8f897dc4cba83d42a3180d33521b97c4618ec79387ac6e18d25ddc",
-      "bytes": 3257
+      "sha256": "f74276ccaf5cb2ecfb1973a4ffc3ce8ece41bb88c7b0b1b7e403d6135f307028",
+      "bytes": 4595
     },
     {
       "path": "claude-adapter.js",
@@ -115,6 +120,11 @@
       "bytes": 2965
     },
     {
+      "path": "infrastructure/emulator.firebase.json",
+      "sha256": "ccf386621f5b84b16281cae66dbd95fbae5253ada78fa326a9e9869d46001a3c",
+      "bytes": 169
+    },
+    {
       "path": "infrastructure/firestore.rules",
       "sha256": "ed1e7c11f025d9464e80e4c4584711c474a0c9b0e07802618de8d02dddadec87",
       "bytes": 153
@@ -128,6 +138,16 @@
       "path": "infrastructure/route-disabled.json",
       "sha256": "2d2a7570acd6c85e05db29c519980c06c5a52798ec49115d6ff78c0936c0e619",
       "bytes": 1865
+    },
+    {
+      "path": "infrastructure/trial-disabled.json",
+      "sha256": "e79061a973f1c19ec403007dbd4e1571292cf45250bdf52053230e413c46b19c",
+      "bytes": 130
+    },
+    {
+      "path": "integration/firestore-allowance.mjs",
+      "sha256": "1995ab437626f2af864cf8d2d3539c886193ffaf4112bd8aa1e368ce03d6c523",
+      "bytes": 2619
     },
     {
       "path": "openai-adapter.js",
@@ -156,8 +176,8 @@
     },
     {
       "path": "protocol.schema.json",
-      "sha256": "1b2aba24886761bbea73608dce21bbdc098715af14be4723f2f543ee1e751341",
-      "bytes": 3550
+      "sha256": "29da98ce64724448b5fe5ccd052fe6e06fee069e7b28ab42837285254aca0137",
+      "bytes": 7988
     },
     {
       "path": "provider-dispatcher.js",
@@ -191,8 +211,8 @@
     },
     {
       "path": "test/apple-entitlement.test.js",
-      "sha256": "0e9aa4e88d30fc41860c29b0c258f1863d4a981cabf951fb82e6310307a2f293",
-      "bytes": 2742
+      "sha256": "054959b1e674babb9c3dca196149ce300c67c036bd63ed02a6f5a49544954701",
+      "bytes": 2780
     },
     {
       "path": "test/apple-notifications.test.js",
@@ -245,6 +265,11 @@
       "bytes": 2235
     },
     {
+      "path": "test/trial-access.test.js",
+      "sha256": "342af43c989487c99041e216948486dea4dc023cdd2914e4a93320bf7075ad7c",
+      "bytes": 12191
+    },
+    {
       "path": "test/vouchers.test.js",
       "sha256": "9ed542ab1a66c8fac94fa075b539376edf15b55db45408ed5579e69fb5a32c54",
       "bytes": 6966
@@ -270,9 +295,14 @@
       "bytes": 1877
     },
     {
+      "path": "trial-access.js",
+      "sha256": "7f7958a4279b44a380dad207f38bc9beb52e42e754a3e1ca72c8389bb0fbccb4",
+      "bytes": 6565
+    },
+    {
       "path": "vouchers.js",
-      "sha256": "b59ff04df8d262af31b6b6724d15f6269755102104975d807c40e82eb2de89d8",
-      "bytes": 6149
+      "sha256": "0b8438dbd1baa65bb3dd3dccb88871013c105fd2e163a966d780253c6f3ea365",
+      "bytes": 8124
     }
   ]
 }

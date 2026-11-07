@@ -39,33 +39,60 @@ export function billingLedgerID(originalTransactionID,hmacKey) {
   return createHmac('sha256',hmacKey).update(originalTransactionID).digest('hex');
 }
 
+function allowanceState(record,configuredLimit) {
+  const data=record.exists?record.data():{};
+  const reserved=record.exists?data.reserved:0;
+  const limit=Object.hasOwn(data,'limit')?data.limit:configuredLimit;
+  if(!Number.isSafeInteger(reserved)||reserved<0||!Number.isSafeInteger(limit)||limit<1||limit>1000000000)throw new GatewayError(503,'allowance_unavailable');
+  return {reserved,limit};
+}
+
 // Lives only in the billing project. Call after authoritative transaction verification.
 export function firestoreAllowance(database) {
   return async ({ledgerID,window,units,limit}) => database.runTransaction(async tx=>{
-    if(!/^[a-f0-9]{64}$/.test(ledgerID) || !/^[a-f0-9]{64}$/.test(window) || !Number.isSafeInteger(units) || units<1 || units>10000000 || !Number.isSafeInteger(limit) || limit<units) throw new GatewayError(400,'invalid_allowance');
+    if(!/^[a-f0-9]{64}$/.test(ledgerID) || !/^[a-f0-9]{64}$/.test(window) || !Number.isSafeInteger(units) || units<1 || units>10000000 || !Number.isSafeInteger(limit) || limit<1 || limit>1000000000) throw new GatewayError(400,'invalid_allowance');
     const reference=database.collection('allowances').doc(`${ledgerID}-${window}`);
-    const record=await tx.get(reference);const reserved=record.exists?record.data().reserved:0;
-    if(!Number.isSafeInteger(reserved)||reserved<0) throw new GatewayError(503,'allowance_unavailable');
-    if(reserved+units>limit) throw new GatewayError(429,'allowance_exhausted');
-    tx.set(reference,{reserved:reserved+units});
+    const record=await tx.get(reference);const {reserved,limit:periodLimit}=allowanceState(record,limit);
+    if(reserved+units>periodLimit) throw new GatewayError(429,'allowance_exhausted');
+    tx.set(reference,{reserved:reserved+units,limit:periodLimit});
+    return {limitUnits:periodLimit,remainingUnits:periodLimit-reserved-units};
   });
 }
-export function voucherIssuer({verifyTransaction,reserve,privateKey,kid,issuer,audience,hmacKey,routeCosts,monthlyUnits,now=()=>Math.floor(Date.now()/1000)}) {
+export function firestoreAllowanceReader(database) {
+  return async({ledgerID,window,limit})=>{
+    if(!/^[a-f0-9]{64}$/.test(ledgerID)||!/^[a-f0-9]{64}$/.test(window)||!Number.isSafeInteger(limit)||limit<1)throw new GatewayError(400,'invalid_allowance');
+    const record=await database.collection('allowances').doc(`${ledgerID}-${window}`).get();
+    const {reserved,limit:periodLimit}=allowanceState(record,limit);
+    return {limitUnits:periodLimit,remainingUnits:Math.max(0,periodLimit-reserved)};
+  };
+}
+export function voucherIssuer({verifyTransaction,reserve,readAllowance,includeAllowance=false,privateKey,kid,issuer,audience,hmacKey,routeCosts,monthlyUnits,now=()=>Math.floor(Date.now()/1000)}) {
   if (!Number.isSafeInteger(monthlyUnits) || monthlyUnits < 1 || monthlyUnits > 1000000000 || !routeCosts || !Object.keys(routeCosts).length || Object.values(routeCosts).some(cost=>!Number.isSafeInteger(cost)||cost<1||cost*5>10000000)) throw new Error('invalid_credit_configuration');
   const costs = Object.freeze({...routeCosts});
-  return async ({signedTransaction,route,count=1})=>{
+  const authorize=async({signedTransaction,route,count=1})=>{
     if(typeof signedTransaction!=='string'||signedTransaction.length>32768||!Object.hasOwn(costs,route)||!Number.isSafeInteger(count)||count<1||count>5) throw new GatewayError(400,'invalid_request');
-    // The verifier owns chain, app, product, environment, renewal and revocation checks.
-    const entitlement=await verifyTransaction(signedTransaction);
-    const timestamp=now();
+    const entitlement=await verifyTransaction(signedTransaction),timestamp=now();
     if(!entitlement?.active || !Number.isSafeInteger(entitlement.expiresAt)||entitlement.expiresAt<=timestamp || !entitlement.originalTransactionID || typeof entitlement.periodTransactionID!=='string' || !entitlement.periodTransactionID.length || entitlement.periodTransactionID.length>256) throw new GatewayError(403,'subscription_inactive');
-    const ledgerID=billingLedgerID(entitlement.originalTransactionID,hmacKey);
-    // The current Apple renewal transaction owns the allowance window. Calendar
-    // boundaries, restore and grace-period extensions cannot mint an extra pool.
-    const window=billingLedgerID('period:'+entitlement.periodTransactionID,hmacKey);
-    await reserve({ledgerID,window,units:count*costs[route],limit:monthlyUnits});
-    const expiresAt=Math.min(timestamp+3600,entitlement.expiresAt);
-    // Lost issuer responses waste reserved allowance. Never issue replacement vouchers speculatively.
-    return Array.from({length:count},()=>issueVoucher({privateKey,kid,issuer,audience,route,expiresAt,now:timestamp}));
+    return {entitlement,timestamp,ledgerID:billingLedgerID(entitlement.originalTransactionID,hmacKey),window:billingLedgerID('period:'+entitlement.periodTransactionID,hmacKey),units:count*costs[route],limit:monthlyUnits};
   };
+  const summary=(state,owner,route)=>{
+    if(!state||!Number.isSafeInteger(state.limitUnits)||state.limitUnits<1||state.limitUnits>1000000000||!Number.isSafeInteger(state.remainingUnits)||state.remainingUnits<0||state.remainingUnits>state.limitUnits)throw new GatewayError(503,'allowance_unavailable');
+    return {kind:'subscription',...state,nextAttemptUnits:costs[route],resetAt:owner.entitlement.periodEndsAt>owner.timestamp?owner.entitlement.periodEndsAt:null,
+      inGracePeriod:owner.entitlement.inGracePeriod===true,canIssue:state.remainingUnits>=costs[route],unavailableReason:state.remainingUnits>=costs[route]?null:'allowance_exhausted'};
+  };
+  const issue=async body=>{
+    const owner=await authorize(body);
+    const state=await reserve({ledgerID:owner.ledgerID,window:owner.window,units:owner.units,limit:owner.limit});
+    const expiresAt=Math.min(owner.timestamp+3600,owner.entitlement.expiresAt);
+    // Lost responses waste reservations. Never issue replacement vouchers speculatively.
+    const tokens=Array.from({length:body.count??1},()=>issueVoucher({privateKey,kid,issuer,audience,route:body.route,expiresAt,now:owner.timestamp}));
+    return includeAllowance?{tokens,allowance:summary(state,owner,body.route)}:tokens;
+  };
+  issue.status=async body=>{
+    if(body.count!==1 || !readAllowance)throw new GatewayError(400,'invalid_request');
+    const owner=await authorize(body);
+    const state=await readAllowance({ledgerID:owner.ledgerID,window:owner.window,limit:owner.limit});
+    return summary(state,owner,body.route);
+  };
+  return issue;
 }
