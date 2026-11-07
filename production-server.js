@@ -1,7 +1,7 @@
 import http from 'node:http';
 import { once } from 'node:events';
 import { GatewayError, activeRoute, publicModels, validateRequest, verifyAttestation } from './admission.js';
-import {validateInputBudget} from './token-budget.js';
+import {validateProviderInputBudget} from './provider-dispatcher.js';
 import {abortable,readJSON,textChunks} from './http-boundaries.js';
 
 // All production dependencies are explicit; no development verifier can be selected by request data.
@@ -34,7 +34,7 @@ export function createProductionServer({appCheck, allowedAppIDs, configuration, 
       const body=validateRequest(await readJSON(request,{limit:32768,signal:abort.signal}));
       const route = activeRoute(await abortable(configuration,abort.signal),body.route);
       if (body.disclosureVersion !== route.disclosureVersion) throw new GatewayError(409,'disclosure_changed');
-      validateInputBudget(route,body);
+      validateProviderInputBudget(route,body);
       const authorization = request.headers.authorization;
       if (typeof authorization !== 'string' || !authorization.startsWith('Bearer ') || authorization.length > 8192) throw new GatewayError(401,'access_required');
       // Invalid signatures must not drain fleet admission credits.

@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { DailyQuota, activeRoute, publicModels, cachedConfiguration, verifyAttestation, GatewayError } from '../admission.js';
 import { createProductionServer } from '../production-server.js';
-const route = {id:'openai-terra-text',provider:'OpenAI',model:'gpt-5.6-terra',disclosureVersion:1,enabled:true,retentionProfile:'zdr',verifiedUntil:Date.now()+3600000};
+const route = {id:'openai-terra-text',provider:'OpenAI',model:'gpt-5.6-terra',disclosureVersion:1,enabled:true,retentionProfile:'zdr',verifiedUntil:Date.now()+3600000,targetDigest:'a'.repeat(64),verification:{evidenceDigest:'b'.repeat(64),reviewedAt:Date.now(),agreementApproved:true,payloadVerified:true,cacheDisabled:true,loggingDisabled:true,abuseMonitoringApproved:true,persistentUserIDNotRequired:true,pricingVerified:true}};
 test('route evidence expires and stale configuration fails closed', () => {
  const now = Date.now(); const config = {enabled:true,fetchedAt:now,routes:[route]};
  assert.equal(activeRoute(config,route.id,now).id,route.id);

@@ -1,3 +1,4 @@
+import {ROUTE_SPECS} from './route-specs.js';
 import {get_encoding} from 'tiktoken';
 import {GatewayError} from './admission.js';
 import {openAIPayload} from './openai-payload.js';
@@ -41,8 +42,6 @@ export function maximumInferenceMicroUSD() {
 
 export function validateIssuerCreditPolicy({routeCosts,monthlyUnits}) {
   if(!Number.isSafeInteger(monthlyUnits)||monthlyUnits<1||monthlyUnits>1000000000 ||
-     !routeCosts || Object.keys(routeCosts).length!==1 ||
-     !Number.isSafeInteger(routeCosts['openai-terra-text']) ||
-     routeCosts['openai-terra-text']<OPENAI_BUDGET.reservationMicroUSD ||
-     routeCosts['openai-terra-text']>monthlyUnits) throw new Error('invalid_credit_configuration');
+     !routeCosts || !Object.keys(routeCosts).length ||
+     Object.entries(routeCosts).some(([id,cost])=>!Object.hasOwn(ROUTE_SPECS,id) || !Number.isSafeInteger(cost) || cost<ROUTE_SPECS[id].minimumReservationMicroUSD || cost>monthlyUnits || cost*5>10000000)) throw new Error('invalid_credit_configuration');
 }

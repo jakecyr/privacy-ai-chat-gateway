@@ -6,7 +6,7 @@ import {createProductionServer} from '../production-server.js';
 import {createBillingServer} from '../billing-server.js';
 import {GatewayError} from '../admission.js';
 
-const route={id:'openai-terra-text',provider:'OpenAI',model:'gpt-5.6-terra',disclosureVersion:1,enabled:true,retentionProfile:'zdr',verifiedUntil:Date.now()+3600000};
+const route={id:'openai-terra-text',provider:'OpenAI',model:'gpt-5.6-terra',disclosureVersion:1,enabled:true,retentionProfile:'zdr',verifiedUntil:Date.now()+3600000,targetDigest:'a'.repeat(64),verification:{evidenceDigest:'b'.repeat(64),reviewedAt:Date.now(),agreementApproved:true,payloadVerified:true,cacheDisabled:true,loggingDisabled:true,abuseMonitoringApproved:true,persistentUserIDNotRequired:true,pricingVerified:true}};
 const body={route:route.id,disclosureVersion:1,messages:[{role:'user',text:'SYNTHETIC_PRIVATE_INPUT'}],memory:[]};
 const defaults=()=>({appCheck:{verifyToken:async()=>({appId:'app'})},allowedAppIDs:['app'],configuration:async()=>({enabled:true,version:1,fetchedAt:Date.now(),routes:[route]}),quota:{take:async()=>{}},validateVoucher:async()=>{},spendVoucher:async()=>{},generate:async function*(){yield {type:'done',reason:'stop'}}});
 async function listen(server,t) {

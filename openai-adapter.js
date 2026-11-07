@@ -5,7 +5,7 @@ import {validateInputBudget,validateOpenAIUsage} from './token-budget.js';
 export function openAIAdapter({apiKey,fetchImpl=fetch,onUsageViolation=async()=>{}}) {
   if (!apiKey) throw new Error('provider_credential_missing');
   let quarantined=false;
-  return async function* generate(route,input,signal) {
+  const generate=async function* generate(route,input,signal) {
     if (quarantined) throw new GatewayError(503,'route_unavailable');
     validateInputBudget(route,input);
     if (route.model !== 'gpt-5.6-terra' || route.provider !== 'OpenAI') throw new GatewayError(503,'route_unavailable');
@@ -67,4 +67,5 @@ export function openAIAdapter({apiKey,fetchImpl=fetch,onUsageViolation=async()=>
       throw new GatewayError(503,signal.aborted?'upstream_timeout':'upstream_failure');
     } finally { await reader.cancel().catch(()=>{}); reader.releaseLock(); }
   };
+  return Object.assign(generate,{healthy:()=>!quarantined});
 }

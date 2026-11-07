@@ -9,7 +9,61 @@
       "disclosureVersion": 1,
       "enabled": false,
       "retentionProfile": "unverified",
-      "verifiedUntil": 0
+      "verifiedUntil": 0,
+      "targetDigest": "",
+      "verification": {
+        "evidenceDigest": "",
+        "reviewedAt": 0,
+        "agreementApproved": false,
+        "payloadVerified": false,
+        "cacheDisabled": false,
+        "loggingDisabled": false,
+        "abuseMonitoringApproved": false,
+        "persistentUserIDNotRequired": false,
+        "pricingVerified": false
+      }
+    },
+    {
+      "id": "claude-sonnet-4-6-text",
+      "provider": "Claude",
+      "model": "claude-sonnet-4-6",
+      "disclosureVersion": 1,
+      "enabled": false,
+      "retentionProfile": "unverified",
+      "verifiedUntil": 0,
+      "targetDigest": "",
+      "verification": {
+        "evidenceDigest": "",
+        "reviewedAt": 0,
+        "agreementApproved": false,
+        "payloadVerified": false,
+        "cacheDisabled": false,
+        "loggingDisabled": false,
+        "abuseMonitoringApproved": false,
+        "persistentUserIDNotRequired": false,
+        "pricingVerified": false
+      }
+    },
+    {
+      "id": "gemini-3-8-flash-low-text",
+      "provider": "Gemini",
+      "model": "gemini-3.8-flash",
+      "disclosureVersion": 1,
+      "enabled": false,
+      "retentionProfile": "unverified",
+      "verifiedUntil": 0,
+      "targetDigest": "",
+      "verification": {
+        "evidenceDigest": "",
+        "reviewedAt": 0,
+        "agreementApproved": false,
+        "payloadVerified": false,
+        "cacheDisabled": false,
+        "loggingDisabled": false,
+        "abuseMonitoringApproved": false,
+        "persistentUserIDNotRequired": false,
+        "pricingVerified": false
+      }
     }
   ]
 }
