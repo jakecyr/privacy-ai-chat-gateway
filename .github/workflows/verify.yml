@@ -1,0 +1,75 @@
+name: Backend verification and images
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [22, 24]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: node tools/verify-source.mjs
+      - run: npm ci --ignore-scripts
+      - run: npm test
+      - run: npm audit --omit=dev --audit-level=high
+      - run: node tools/verify-source.mjs
+  images:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+      - run: node tools/verify-source.mjs
+      - name: Sign in to repository container registry
+        env:
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: printf '%s' "$REGISTRY_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+      - name: Build and publish commit images
+        shell: bash
+        run: |
+          set -euo pipefail
+          registry_repository="$(printf '%s' "$GITHUB_REPOSITORY" | tr '[:upper:]' '[:lower:]')"
+          source_hash="$(node -p 'require("./source-manifest.json").sourceTreeSHA256')"
+          for component in gateway billing; do
+            dockerfile=Dockerfile
+            suffix=''
+            if [[ "$component" == billing ]]; then dockerfile=Dockerfile.billing; suffix=-billing; fi
+            image="ghcr.io/${registry_repository}${suffix}:sha-${GITHUB_SHA}"
+            docker build --pull --file "$dockerfile" \
+              --build-arg "SOURCE_REVISION=$GITHUB_SHA" \
+              --build-arg "SOURCE_REPOSITORY=https://github.com/$GITHUB_REPOSITORY" \
+              --build-arg "SOURCE_TREE_SHA256=$source_hash" --tag "$image" .
+            [[ "$(docker inspect --format '{{.Config.User}}' "$image")" == node ]]
+            docker push "$image"
+            docker inspect --format '{{index .RepoDigests 0}}' "$image" > "${component}-digest.txt"
+          done
+          node --input-type=module <<'JS'
+          import {readFile,writeFile} from 'node:fs/promises';
+          const source=JSON.parse(await readFile('source-manifest.json'));
+          const images={sourceRevision:process.env.GITHUB_SHA,sourceTreeSHA256:source.sourceTreeSHA256,productionReleaseGatePassed:false};
+          for(const component of ['gateway','billing'])images[component]=(await readFile(`${component}-digest.txt`,'utf8')).trim();
+          await writeFile('images.json',JSON.stringify(images,null,2)+'\n');
+          console.log(JSON.stringify(images));
+          JS
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: backend-image-inventory
+          path: |
+            images.json
+            source-manifest.json
+            dependencies.json

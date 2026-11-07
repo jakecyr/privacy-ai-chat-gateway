@@ -1,0 +1,15 @@
+{
+  "enabled": false,
+  "version": 1,
+  "routes": [
+    {
+      "id": "openai-terra-text",
+      "provider": "OpenAI",
+      "model": "gpt-5.6-terra",
+      "disclosureVersion": 1,
+      "enabled": false,
+      "retentionProfile": "unverified",
+      "verifiedUntil": 0
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:private-ai-chat:protocol:v1",
+  "$comment": "Runtime also enforces UTF-8 validity, 32768 raw request bytes, 750 combined memory bytes, and bounded SSE framing/output. JSON Schema character lengths do not replace these byte limits.",
+  "$defs": {
+    "routeID": {"type":"string","pattern":"^[a-z0-9-]{1,80}$"},
+    "message": {
+      "type":"object","additionalProperties":false,"required":["role","text"],
+      "properties":{"role":{"enum":["user","assistant"]},"text":{"type":"string","minLength":1,"maxLength":32768,"pattern":"\\S"}}
+    },
+    "chatRequest": {
+      "type":"object","additionalProperties":false,"required":["route","disclosureVersion","messages","memory"],
+      "properties":{
+        "route":{"$ref":"#/$defs/routeID"},"disclosureVersion":{"type":"integer","minimum":1},
+        "messages":{"type":"array","minItems":1,"maxItems":24,"items":{"$ref":"#/$defs/message"}},
+        "memory":{"type":"array","maxItems":3,"items":{"type":"string","maxLength":750}}
+      },
+      "$comment":"The final message must have role user; runtime checks this invariant."
+    },
+    "billingRequest": {
+      "type":"object","additionalProperties":false,"required":["signedTransaction","route","count"],
+      "properties":{"signedTransaction":{"type":"string","minLength":1,"maxLength":32768},"route":{"$ref":"#/$defs/routeID"},"count":{"type":"integer","minimum":1,"maximum":5}}
+    },
+    "notificationRequest": {
+      "type":"object","additionalProperties":false,"required":["signedPayload"],
+      "properties":{"signedPayload":{"type":"string","minLength":1,"maxLength":45000}}
+    },
+    "publicRoute": {
+      "type":"object","additionalProperties":false,"required":["id","provider","model","disclosureVersion"],
+      "properties":{"id":{"$ref":"#/$defs/routeID"},"provider":{"type":"string"},"model":{"type":"string"},"disclosureVersion":{"type":"integer","minimum":1}}
+    },
+    "modelsResponse": {
+      "type":"object","additionalProperties":false,"required":["version","routes"],
+      "properties":{"version":{"type":"integer","minimum":1},"routes":{"type":"array","items":{"$ref":"#/$defs/publicRoute"}}}
+    },
+    "streamEvent": {
+      "$comment":"Normalized event after SSE parsing: event is the SSE event field; data is its decoded JSON. Exactly one terminal done/error ends the stream.",
+      "oneOf":[
+        {"type":"object","additionalProperties":false,"required":["event","data"],"properties":{"event":{"const":"meta"},"data":{"type":"object","additionalProperties":false,"required":["route","disclosureVersion"],"properties":{"route":{"$ref":"#/$defs/routeID"},"disclosureVersion":{"type":"integer","minimum":1}}}}},
+        {"type":"object","additionalProperties":false,"required":["event","data"],"properties":{"event":{"const":"delta"},"data":{"type":"object","additionalProperties":false,"required":["text"],"properties":{"text":{"type":"string"}}}}},
+        {"type":"object","additionalProperties":false,"required":["event","data"],"properties":{"event":{"const":"done"},"data":{"type":"object","additionalProperties":false,"required":["reason"],"properties":{"reason":{"enum":["stop","length"]}}}}},
+        {"type":"object","additionalProperties":false,"required":["event","data"],"properties":{"event":{"const":"error"},"data":{"type":"object","additionalProperties":false,"required":["code"],"properties":{"code":{"enum":["upstream_timeout","content_blocked","upstream_failure","route_unavailable"]}}}}}
+      ]
+    }
+  }
+}
