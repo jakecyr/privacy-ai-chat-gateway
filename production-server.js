@@ -26,11 +26,18 @@ export function createProductionServer({appCheck, allowedAppIDs, configuration, 
         const models=publicModels(await abortable(configuration,abort.signal));
         response.writeHead(200,{'Content-Type':'application/json','Cache-Control':'no-store'});response.end(JSON.stringify(models));return;
       }
-      if (request.method !== 'POST' || request.url !== '/v1/chat/stream') throw new GatewayError(404,'not_found');
+      const connectionCheck=request.url==='/v1/attestation/check';
+      if (request.method !== 'POST' || (request.url !== '/v1/chat/stream' && !connectionCheck)) throw new GatewayError(404,'not_found');
       if (!/^application\/json(?:\s*;\s*charset=utf-8)?$/i.test(request.headers['content-type'] || '') || request.headers['content-encoding']) throw new GatewayError(415,'invalid_request');
-      if (Number(request.headers['content-length']) > 32768) throw new GatewayError(413,'invalid_request');
+      if (Number(request.headers['content-length']) > (connectionCheck?256:32768)) throw new GatewayError(413,'invalid_request');
       // Attestation is consumed before parsing or acting on any prompt fields.
       await abortable(()=>verifyAttestation(appCheck,request.headers['x-firebase-appcheck'],allowedAppIDs),abort.signal);
+      if(connectionCheck) {
+        const body=await readJSON(request,{limit:256,signal:abort.signal});
+        if(!body || typeof body!=='object' || Array.isArray(body) || Object.keys(body).length)throw new GatewayError(400,'invalid_request');
+        response.writeHead(200,{'Content-Type':'application/json','Cache-Control':'no-store'});
+        response.end(JSON.stringify({verified:true}));return;
+      }
       const body=validateRequest(await readJSON(request,{limit:32768,signal:abort.signal}));
       const route = activeRoute(await abortable(configuration,abort.signal),body.route);
       if (body.disclosureVersion !== route.disclosureVersion) throw new GatewayError(409,'disclosure_changed');

@@ -1,5 +1,5 @@
 {
-  "sourceTreeSHA256": "7d8a0a82fa223a78cd6e5603bde1c4091a9e4862a67a45d7902056861491baa9",
+  "sourceTreeSHA256": "3a863a639f89978addd79715a53aeeaf80838cde4d76048858c09783f2a0b4f7",
   "hashScope": "sorted UTF-8 path, NUL, binary SHA-256 per listed file; manifest excluded",
   "license": "Apache-2.0",
   "deploymentVerification": "not established by this source snapshot",
@@ -46,8 +46,8 @@
     },
     {
       "path": "README.md",
-      "sha256": "c25a2a5f251b25a793da8ec779ee88ab4ae3666196ddfaee64f99dacb3789209",
-      "bytes": 8778
+      "sha256": "0f8bcf26038465b4af05121616ba47710bc711925af532c418afbaa95ce988da",
+      "bytes": 9705
     },
     {
       "path": "access-policy.js",
@@ -171,8 +171,8 @@
     },
     {
       "path": "production-server.js",
-      "sha256": "3a301b04f2a551341f70128ccbaf7bbe7b6d0f485c69dd3f619fc3b30958b300",
-      "bytes": 6229
+      "sha256": "ecfd322e0ca2e9f591d20963d74d45cc6e39043be6d6756a2e97d861c449caba",
+      "bytes": 6751
     },
     {
       "path": "protocol.schema.json",
@@ -218,6 +218,11 @@
       "path": "test/apple-notifications.test.js",
       "sha256": "ca96c4edc16d39ae7a1acf07f1f43e37c324de76653cac755efe66041fc1dc6a",
       "bytes": 3044
+    },
+    {
+      "path": "test/attestation-check.test.js",
+      "sha256": "41c75b4ef9b8e5cb9a31121f7b630e051f58471e7fa21507b23733a5ced10cd9",
+      "bytes": 2576
     },
     {
       "path": "test/billing-server.test.js",
