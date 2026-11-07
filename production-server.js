@@ -4,6 +4,15 @@ import { GatewayError, activeRoute, publicModels, validateRequest, verifyAttesta
 import {validateProviderInputBudget} from './provider-dispatcher.js';
 import {abortable,readJSON,textChunks} from './http-boundaries.js';
 
+// Explicit release-verification mode: no provider, database, quota or billing dependencies.
+// There is no request-controlled transition out of this mode.
+export function createAttestationOnlyServer({appCheck,allowedAppIDs}) {
+  const unavailable=()=>{throw new GatewayError(503,'route_unavailable');};
+  return createProductionServer({appCheck,allowedAppIDs,
+    configuration:async()=>({version:1,enabled:false,fetchedAt:Date.now(),routes:[]}),
+    quota:{take:unavailable},generate:unavailable,validateVoucher:unavailable,spendVoucher:unavailable});
+}
+
 // All production dependencies are explicit; no development verifier can be selected by request data.
 export function createProductionServer({appCheck, allowedAppIDs, configuration, quota, generate, validateVoucher, spendVoucher,deadlineMS=60000}) {
   if (!appCheck || !allowedAppIDs?.length || !configuration || !quota || !generate || !validateVoucher || !spendVoucher) throw new Error('missing_dependencies');

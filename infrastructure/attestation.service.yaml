@@ -1,0 +1,35 @@
+# Render placeholders privately, then use: gcloud run services replace FILE --project PROJECT --region REGION
+# Diagnostic-only template: inference is unreachable and no provider/billing secrets are mounted.
+# Verify logging exclusions before release-device checks; billing selection is still required.
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: private-chat-gateway
+  annotations:
+    run.googleapis.com/ingress: all
+    run.googleapis.com/maxScale: '2'
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/maxScale: '2'
+        autoscaling.knative.dev/minScale: '0'
+    spec:
+      serviceAccountName: GATEWAY_SERVICE_ACCOUNT
+      containerConcurrency: 8
+      timeoutSeconds: 75
+      containers:
+        - image: GATEWAY_IMAGE_AT_SHA256_DIGEST
+          ports:
+            - containerPort: 8080
+          resources:
+            limits:
+              cpu: '1'
+              memory: 512Mi
+          env:
+            - name: GOOGLE_CLOUD_PROJECT
+              value: INFERENCE_PROJECT_ID
+            - name: APP_CHECK_APP_IDS
+              value: '["REGISTERED_FIREBASE_IOS_APP_ID"]'
+            - name: ATTESTATION_CHECK_ONLY
+              value: 'true'

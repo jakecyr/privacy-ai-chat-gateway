@@ -3,7 +3,7 @@ import {createHash,createPublicKey} from 'node:crypto';
 import {initializeApp,applicationDefault} from 'firebase-admin/app';
 import {getAppCheck} from 'firebase-admin/app-check';
 import {getFirestore} from 'firebase-admin/firestore';
-import {createProductionServer} from './production-server.js';
+import {createProductionServer,createAttestationOnlyServer} from './production-server.js';
 import {DailyQuota,firestoreReservation,cachedConfiguration} from './admission.js';
 import {firestoreVoucherSpender,verifyVoucher} from './vouchers.js';
 import {openAIAdapter} from './openai-adapter.js';
@@ -17,6 +17,11 @@ async function start() {
   const projectID=process.env.GOOGLE_CLOUD_PROJECT;
   const appIDs=JSON.parse(process.env.APP_CHECK_APP_IDS || '[]');
   if(!projectID || !Array.isArray(appIDs) || !appIDs.length || !appIDs.every(id=>typeof id==='string')) throw new Error('configuration_missing');
+  if(process.env.ATTESTATION_CHECK_ONLY && process.env.ATTESTATION_CHECK_ONLY!=='true')throw new Error('configuration_missing');
+  if(process.env.ATTESTATION_CHECK_ONLY==='true') {
+    const app=initializeApp({credential:applicationDefault(),projectId:projectID});
+    listen(createAttestationOnlyServer({appCheck:getAppCheck(app),allowedAppIDs:appIDs}));return;
+  }
   const keyFile=process.env.OPENAI_KEY_FILE;
   const publicKeyFile=process.env.VOUCHER_PUBLIC_KEYS_FILE;
   if(!publicKeyFile || !process.env.VOUCHER_ISSUER || !process.env.VOUCHER_AUDIENCE) throw new Error('configuration_missing');
@@ -58,6 +63,9 @@ async function start() {
     validateVoucher:(token,route)=>verifyVoucher(token,{publicKeys,issuer:process.env.VOUCHER_ISSUER,audience:process.env.VOUCHER_AUDIENCE,route:route.id}),
     spendVoucher:firestoreVoucherSpender(database,{publicKeys,issuer:process.env.VOUCHER_ISSUER,audience:process.env.VOUCHER_AUDIENCE}),
   });
+  listen(server);
+}
+function listen(server) {
   const port=Number(process.env.PORT || 8080);
   if(!Number.isInteger(port)||port<1||port>65535) throw new Error('configuration_missing');
   server.listen(port,'0.0.0.0');

@@ -1,5 +1,5 @@
 {
-  "sourceTreeSHA256": "3a863a639f89978addd79715a53aeeaf80838cde4d76048858c09783f2a0b4f7",
+  "sourceTreeSHA256": "9f2469de732bf27d71349002ca5b2ec88f2bf57bb966b4447415b4f7a55ae2c6",
   "hashScope": "sorted UTF-8 path, NUL, binary SHA-256 per listed file; manifest excluded",
   "license": "Apache-2.0",
   "deploymentVerification": "not established by this source snapshot",
@@ -46,8 +46,8 @@
     },
     {
       "path": "README.md",
-      "sha256": "0f8bcf26038465b4af05121616ba47710bc711925af532c418afbaa95ce988da",
-      "bytes": 9705
+      "sha256": "06fbd96a05fd4fe04d8ff4ad3e429d5a436a2066258cce974b0c5f3af4044802",
+      "bytes": 10205
     },
     {
       "path": "access-policy.js",
@@ -111,8 +111,13 @@
     },
     {
       "path": "infrastructure/README.md",
-      "sha256": "794b66f809308cca38d07f81967f9766a769f8ff72832c1550bb2ff37e33294e",
-      "bytes": 5828
+      "sha256": "817d586c87293cfc8574154d3621f77aac87df643350526d0a6469022be305aa",
+      "bytes": 7144
+    },
+    {
+      "path": "infrastructure/attestation.service.yaml",
+      "sha256": "030413ef5938804a1ee9c8a537fbb124e694758d57c86d52f12a5450eb7c0794",
+      "bytes": 1211
     },
     {
       "path": "infrastructure/billing.service.yaml",
@@ -171,8 +176,8 @@
     },
     {
       "path": "production-server.js",
-      "sha256": "ecfd322e0ca2e9f591d20963d74d45cc6e39043be6d6756a2e97d861c449caba",
-      "bytes": 6751
+      "sha256": "8df8200a074f58028334f8c9a3451a145d4d5784eee43158228521260864e2af",
+      "bytes": 7308
     },
     {
       "path": "protocol.schema.json",
@@ -196,8 +201,8 @@
     },
     {
       "path": "runtime.js",
-      "sha256": "840d312e6b34a804facbd0a7bdcb7e9d213681b803febd5fd49edcca0b169b40",
-      "bytes": 4467
+      "sha256": "eeb62be2126056567f14bc3f750e0fc471345c192d48df366a00bf2e15eba820",
+      "bytes": 4908
     },
     {
       "path": "server.js",
@@ -221,8 +226,8 @@
     },
     {
       "path": "test/attestation-check.test.js",
-      "sha256": "41c75b4ef9b8e5cb9a31121f7b630e051f58471e7fa21507b23733a5ced10cd9",
-      "bytes": 2576
+      "sha256": "3a8130a1efd028e5cf321996daded9f4d2809df1a6aacdcb93bc9229cf05c75a",
+      "bytes": 5224
     },
     {
       "path": "test/billing-server.test.js",
