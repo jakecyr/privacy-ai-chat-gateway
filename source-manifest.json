@@ -1,5 +1,5 @@
 {
-  "sourceTreeSHA256": "763196d90d1da1eab6767ed136584ddbbe3bdfee2a2fff55ee49c630b9f42a88",
+  "sourceTreeSHA256": "861306144d669e5e55e3d161b92430165d0cd207104448c381700501a8a502e9",
   "hashScope": "sorted UTF-8 path, NUL, binary SHA-256 per listed file; manifest excluded",
   "license": "Apache-2.0",
   "deploymentVerification": "not established by this source snapshot",
@@ -86,8 +86,13 @@
     },
     {
       "path": "infrastructure/README.md",
-      "sha256": "bb9ce41886b3d29d21056c3932c4644cda5d681eabe4323a4324db54792c17d9",
-      "bytes": 4562
+      "sha256": "9e5a38fe5c88f992d23df4a2169770583853827ab3617de16772a330c6783f2b",
+      "bytes": 5458
+    },
+    {
+      "path": "infrastructure/billing.service.yaml",
+      "sha256": "226053820f6b0334f8f327cabe81d3c234d0fa34abd193336cb094ec0314680c",
+      "bytes": 2965
     },
     {
       "path": "infrastructure/firestore.rules",

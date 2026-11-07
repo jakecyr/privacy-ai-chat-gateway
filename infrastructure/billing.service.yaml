@@ -1,0 +1,91 @@
+# Reference only. Render privately, pin image digest/numeric secret versions and review before deployment.
+# Apple configuration references /secrets/apple-root/root.cer from Apple PKI.
+---
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: private-chat-billing
+  annotations:
+    run.googleapis.com/ingress: all
+    run.googleapis.com/maxScale: '2'
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/maxScale: '2'
+        autoscaling.knative.dev/minScale: '0'
+    spec:
+      serviceAccountName: BILLING_SERVICE_ACCOUNT
+      containerConcurrency: 8
+      timeoutSeconds: 45
+      containers:
+      - image: BILLING_IMAGE_AT_SHA256_DIGEST
+        ports:
+        - containerPort: 8080
+        resources:
+          limits:
+            cpu: '1'
+            memory: 512Mi
+        env:
+        - name: GOOGLE_CLOUD_PROJECT
+          value: BILLING_PROJECT_ID
+        - name: APP_CHECK_PROJECT_ID
+          value: INFERENCE_PROJECT_ID
+        - name: APP_CHECK_APP_IDS
+          value: '["REGISTERED_FIREBASE_IOS_APP_ID"]'
+        - name: APPLE_CONFIGURATION_FILE
+          value: "/secrets/apple-configuration/config.json"
+        - name: APPLE_SIGNING_KEY_FILE
+          value: "/secrets/apple-signing/key.p8"
+        - name: VOUCHER_SIGNING_KEY_FILE
+          value: "/secrets/voucher-signing/key.pem"
+        - name: LEDGER_HMAC_KEY_FILE
+          value: "/secrets/ledger-hmac/key"
+        - name: VOUCHER_KEY_ID
+          value: VOUCHER_KEY_ID
+        - name: VOUCHER_ISSUER
+          value: BILLING_SERVICE_ORIGIN
+        - name: VOUCHER_AUDIENCE
+          value: GATEWAY_SERVICE_ORIGIN
+        volumeMounts:
+        - name: apple-configuration
+          mountPath: "/secrets/apple-configuration"
+        - name: apple-signing
+          mountPath: "/secrets/apple-signing"
+        - name: voucher-signing
+          mountPath: "/secrets/voucher-signing"
+        - name: ledger-hmac
+          mountPath: "/secrets/ledger-hmac"
+        - name: apple-root
+          mountPath: "/secrets/apple-root"
+      volumes:
+      - name: apple-configuration
+        secret:
+          secretName: APPLE_CONFIGURATION_SECRET_NAME
+          items:
+          - key: IMMUTABLE_SECRET_VERSION
+            path: config.json
+      - name: apple-signing
+        secret:
+          secretName: APPLE_SIGNING_SECRET_NAME
+          items:
+          - key: IMMUTABLE_SECRET_VERSION
+            path: key.p8
+      - name: voucher-signing
+        secret:
+          secretName: VOUCHER_SIGNING_KEY_SECRET_NAME
+          items:
+          - key: IMMUTABLE_SECRET_VERSION
+            path: key.pem
+      - name: ledger-hmac
+        secret:
+          secretName: LEDGER_HMAC_SECRET_NAME
+          items:
+          - key: IMMUTABLE_SECRET_VERSION
+            path: key
+      - name: apple-root
+        secret:
+          secretName: APPLE_ROOT_CERTIFICATE_SECRET_NAME
+          items:
+          - key: IMMUTABLE_SECRET_VERSION
+            path: root.cer
