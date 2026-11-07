@@ -1,6 +1,6 @@
 # Provider profiles and release evidence
 
-All routes in the reference configuration are disabled. Synthetic tests prove adapter behavior against fixtures, not account-level retention, provider availability or real invoices. The shipped iOS beta still disables cloud inference and its current provider disclosure supports OpenAI only. Complete the new client disclosures and device checks before offering additional routes.
+All routes in the reference configuration are disabled. Synthetic tests prove adapter behavior against fixtures, not account-level retention, provider availability or real invoices. Clients must include reviewed provider-specific disclosures and pass device checks before offering these routes. A backend source release does not establish an iOS build’s cloud readiness.
 
 ## Compiled profiles
 

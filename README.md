@@ -18,7 +18,7 @@ The launch adapter fixes OpenAI's endpoint and model, storage disabled, reasonin
 
 ## Independently gated providers
 
-Claude Sonnet 4.6 and Gemini 3.8 Flash Low adapters are implemented alongside OpenAI. Every route requires explicit dated operator evidence and a fingerprint matching its actual credentials or project/region. Missing credentials and quarantined adapters are excluded from discovery. See `PROVIDER_VERIFICATION.md` for fixed payloads, retention exceptions, minimum reservation weights and runtime configuration. All reference routes remain disabled. The current iOS beta needs new provider-specific disclosures before these routes can be offered.
+Claude Sonnet 4.6 and Gemini 3.8 Flash Low adapters are implemented alongside OpenAI. Every route requires explicit dated operator evidence and a fingerprint matching its actual credentials or project/region. Missing credentials and quarantined adapters are excluded from discovery. See `PROVIDER_VERIFICATION.md` for fixed payloads, retention exceptions, minimum reservation weights and runtime configuration. All reference routes remain disabled. Clients need matching reviewed disclosures and explicit permission for each provider before these routes can be offered.
 
 ## Separate billing issuer
 
