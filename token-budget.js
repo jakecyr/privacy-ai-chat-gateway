@@ -3,7 +3,8 @@ import {get_encoding} from 'tiktoken';
 import {GatewayError} from './admission.js';
 import {openAIPayload} from './openai-payload.js';
 
-// Compiled limits cannot be increased by request fields or remote configuration.
+// Legacy launch limits are fixed. Catalog profiles are separately validated
+// against compiled input/output bounds; request fields cannot change them.
 // OpenAI's official tiktoken model registry maps GPT-5 prefixes to o200k_base.
 export const OPENAI_BUDGET=Object.freeze({inputTokens:32768,outputTokens:1200,framingReserve:512,
   inputMicroUSDPerToken:2,outputMicroUSDPerToken:12,reservationMicroUSD:80000});

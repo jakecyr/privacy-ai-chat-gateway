@@ -61,3 +61,10 @@ test('Gemini uses configured current model and level without returning thought s
  }});
  const events=await Array.fromAsync(adapter(route,input,new AbortController().signal));assert.equal(JSON.stringify(events).includes('PRIVATE_'),false);assert.deepEqual(events,[{type:'delta',text:'Visible only'},{type:'done',reason:'stop'}]);assert.equal(calls,1);
 });
+
+test('launch commercial policy refuses a provider allowance below the requested margin',async()=>{
+ const {COMMERCIAL_POLICY,validateCommercialMargin}=await import('../commercial-policy.js');
+ assert.doesNotThrow(()=>validateCommercialMargin(COMMERCIAL_POLICY));
+ assert.throws(()=>validateCommercialMargin({...COMMERCIAL_POLICY,monthlyUnits:3000000}),/commercial_margin_below_target/);
+ assert.throws(()=>validateCommercialMargin({...COMMERCIAL_POLICY,commercialPolicy:{...COMMERCIAL_POLICY,priceMicroUSD:1000000}}),/commercial_margin_below_target/);
+});

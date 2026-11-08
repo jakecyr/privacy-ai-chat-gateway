@@ -1,3 +1,4 @@
+import {COMMERCIAL_POLICY,validateCommercialMargin} from './commercial-policy.js';
 import {readFile} from 'node:fs/promises';
 import {createPrivateKey} from 'node:crypto';
 import {initializeApp,applicationDefault} from 'firebase-admin/app';
@@ -18,6 +19,7 @@ async function start() {
   if(!billingProject||!attestationProject||billingProject===attestationProject||!Array.isArray(appIDs)||!appIDs.length||!process.env.VOUCHER_KEY_ID||!process.env.VOUCHER_ISSUER||!process.env.VOUCHER_AUDIENCE) throw new Error('billing_configuration_missing');
   const config=JSON.parse(await readFile(process.env.APPLE_CONFIGURATION_FILE,'utf8'));
   validateIssuerCreditPolicy(config);
+  validateCommercialMargin(config);
   const roots=await Promise.all(config.rootCertificateFiles.map(file=>readFile(file)));
   const signingKey=await readFile(process.env.APPLE_SIGNING_KEY_FILE,'utf8');
   const voucherKey=createPrivateKey(await readFile(process.env.VOUCHER_SIGNING_KEY_FILE,'utf8'));
@@ -30,7 +32,7 @@ async function start() {
   const paid=voucherIssuer({verifyTransaction,reserve:firestoreAllowance(getFirestore(billing)),readAllowance:firestoreAllowanceReader(getFirestore(billing)),includeAllowance:true,privateKey:voucherKey,
     kid:process.env.VOUCHER_KEY_ID,issuer:process.env.VOUCHER_ISSUER,audience:process.env.VOUCHER_AUDIENCE,hmacKey,
     routeCosts:config.routeCosts,monthlyUnits:config.monthlyUnits});
-  const trialPolicy=config.trial??{enabled:false,campaignID:'launch-v1',accountUnits:200000,campaignUnits:200000000,claimLimit:1000};
+  const trialPolicy=config.trial??COMMERCIAL_POLICY.trial;
   const trial=trialIssuer({verifyIdentity:appleAppIdentityVerifier({...config,verifier}),allowance:firestoreTrialAllowance(getFirestore(billing),trialPolicy),privateKey:voucherKey,
     kid:process.env.VOUCHER_KEY_ID,issuer:process.env.VOUCHER_ISSUER,audience:process.env.VOUCHER_AUDIENCE,hmacKey,routeCosts:config.routeCosts,policy:trialPolicy});
   const selected=body=>Object.hasOwn(body,'signedTransaction')?paid:trial;

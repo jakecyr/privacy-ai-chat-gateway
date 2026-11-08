@@ -369,6 +369,19 @@
   ],
   "issuerPolicy": {
     "monthlyUnits": 1000000,
+    "commercialPolicy": {
+      "priceMicroUSD": 9990000,
+      "monthlyUnits": 1000000,
+      "additionalVariableCostBudgetMicroUSD": 250000,
+      "minimumNetRevenueToCostRatio": 5,
+      "trial": {
+        "enabled": false,
+        "campaignID": "launch-v1",
+        "accountUnits": 200000,
+        "campaignUnits": 200000000,
+        "claimLimit": 1000
+      }
+    },
     "routeCosts": {
       "catalog-openai-901b676976668ae9-none": 40000,
       "catalog-openai-901b676976668ae9-low": 45000,

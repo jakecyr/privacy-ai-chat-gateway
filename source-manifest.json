@@ -1,5 +1,5 @@
 {
-  "sourceTreeSHA256": "4a6dd3010bacee8f572c3bc7a48db4d0e7ed604191f995d1751af35bea266624",
+  "sourceTreeSHA256": "a40692032515b2d756a0707a03e50d0db773a65b6df3ed401d4019ca7ad67a2d",
   "hashScope": "sorted UTF-8 path, NUL, binary SHA-256 per listed file; manifest excluded",
   "license": "Apache-2.0",
   "deploymentVerification": "not established by this source snapshot",
@@ -41,13 +41,13 @@
     },
     {
       "path": "PROVIDER_VERIFICATION.md",
-      "sha256": "f57b56d1d8f3eaa0fc7c8f60b5addf8c47bfb50f6e00e1b0dd5bc111946fd23e",
-      "bytes": 7149
+      "sha256": "b915d8e1b2c2043d7a55295ae3a50ad40bfe38d5bf0b9c2ab5b552b2f99ab105",
+      "bytes": 9069
     },
     {
       "path": "README.md",
-      "sha256": "731818106c2c6aca4b9e84ceeb9ad72bdfbcb47f36fa1ae4affcef39c5753140",
-      "bytes": 12466
+      "sha256": "173b63ec943583e9c04c8ed5c97ece0453a7210373989ba725c55cf7ba9aa4d2",
+      "bytes": 12459
     },
     {
       "path": "access-policy.js",
@@ -71,8 +71,8 @@
     },
     {
       "path": "billing-runtime.js",
-      "sha256": "73371f30c291624a4bea1c186eb6d253346d8037e35555aee758bcdf70457659",
-      "bytes": 3707
+      "sha256": "63934cdb61e9a66ff8033a2a5e936403f01a8220d1ed42df7b6e0e5c9b53aec8",
+      "bytes": 3751
     },
     {
       "path": "billing-server.js",
@@ -88,6 +88,11 @@
       "path": "cli.mjs",
       "sha256": "eef9048a4ae8b2d49a299354cf006b98b8b78f798c4187123914b7883988d89f",
       "bytes": 1681
+    },
+    {
+      "path": "commercial-policy.js",
+      "sha256": "512bd6f64e6f827aa48bbe8a59ee8e8378d22ee5c75d1ea901416a6bc1d7ee83",
+      "bytes": 1047
     },
     {
       "path": "dependencies.json",
@@ -106,13 +111,13 @@
     },
     {
       "path": "inference-economics.mjs",
-      "sha256": "5979316ac065d1be2f70b011fbe52f3b70f6a06e143fba2639bbd9b61a95c3f7",
-      "bytes": 2784
+      "sha256": "ec17237adb4da70853d67732465eaa559f9c8253e4bd161c200eb49215235131",
+      "bytes": 3229
     },
     {
       "path": "infrastructure/README.md",
-      "sha256": "817d586c87293cfc8574154d3621f77aac87df643350526d0a6469022be305aa",
-      "bytes": 7144
+      "sha256": "87157c7058f3e913df5eb41c4fbc619f1897c7e7a8f1c15ab529798eba235aae",
+      "bytes": 7146
     },
     {
       "path": "infrastructure/attestation.service.yaml",
@@ -161,8 +166,8 @@
     },
     {
       "path": "infrastructure/model-routes-disabled.json",
-      "sha256": "8805a7640121a53f31e49956c6ab6976042cdce6c079057764865d954aa092f6",
-      "bytes": 23290
+      "sha256": "4d3f705c35a94eb5fa25b8d0711d53a94beafba15a4ec594fcf8ab07e53b76f2",
+      "bytes": 23662
     },
     {
       "path": "infrastructure/route-disabled.json",
@@ -221,8 +226,8 @@
     },
     {
       "path": "render-model-routes.mjs",
-      "sha256": "e2fc32d125605dd9f28d1a02fd5660c4f27acd8988fd927fbc148b2197a1cb37",
-      "bytes": 1852
+      "sha256": "8518efed856015309751dd6499dc5108a6ab51af69357019625d753938cd9630",
+      "bytes": 1918
     },
     {
       "path": "route-specs.js",
@@ -271,8 +276,8 @@
     },
     {
       "path": "test/configurable-models.test.js",
-      "sha256": "76272be76b66781e71f065a1da3d1c6b54396aa6c1c28d719077d138100a18f8",
-      "bytes": 6111
+      "sha256": "cd01767ffa899ceed20daf132bef7c48d346a3fca7cb6fcd023ea635cf94e0cd",
+      "bytes": 6668
     },
     {
       "path": "test/gemini.test.js",
@@ -286,8 +291,8 @@
     },
     {
       "path": "test/model-routes-fixture.json",
-      "sha256": "8805a7640121a53f31e49956c6ab6976042cdce6c079057764865d954aa092f6",
-      "bytes": 23290
+      "sha256": "4d3f705c35a94eb5fa25b8d0711d53a94beafba15a4ec594fcf8ab07e53b76f2",
+      "bytes": 23662
     },
     {
       "path": "test/openai.test.js",
@@ -326,8 +331,8 @@
     },
     {
       "path": "token-budget.js",
-      "sha256": "9832d2cad59eeb0b4e701a10f24cd37d7f7c066f8124d17d12910ae3a9679b63",
-      "bytes": 3611
+      "sha256": "0c0f627d27a9fdc78f68814f4a3bc2ca18fe79dcaee5e33db99ac5eaef1be7a9",
+      "bytes": 3682
     },
     {
       "path": "tools/inventory-logging.py",

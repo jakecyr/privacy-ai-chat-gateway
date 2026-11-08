@@ -1,4 +1,5 @@
 import {readFile,writeFile} from 'node:fs/promises';
+import {COMMERCIAL_POLICY,validateCommercialMargin} from './commercial-policy.js';
 import {catalogRouteID,routeSpecification} from './route-specs.js';
 const [catalogPath,pricesPath,output]=process.argv.slice(2);
 if(!output)throw new Error('Usage: node gateway/render-model-routes.mjs CATALOG PRICES OUTPUT');
@@ -11,5 +12,5 @@ for(const model of catalog.models)for(const reasoning of model.reasoning) {
  const spec=routeSpecification(route.id,route);if(!spec)throw new Error('invalid_model_profile');
  routeCosts[route.id]=Math.ceil(spec.minimumReservationMicroUSD/5000)*5000;routes.push(route);
 }
-await writeFile(output,JSON.stringify({enabled:false,version:catalog.version,routes,issuerPolicy:{monthlyUnits:1000000,routeCosts,modelRoutes:routes,trial:{enabled:false,campaignID:'launch-v1',accountUnits:200000,campaignUnits:200000000,claimLimit:1000}}},null,2)+'\n');
+await writeFile(output,JSON.stringify({enabled:false,version:catalog.version,routes,issuerPolicy:{monthlyUnits:COMMERCIAL_POLICY.monthlyUnits,commercialPolicy:COMMERCIAL_POLICY,routeCosts,modelRoutes:routes,trial:COMMERCIAL_POLICY.trial}},null,2)+'\n');
 console.log(JSON.stringify({routes:routes.length,enabled:false,monthlyModelBudgetUSD:1,freeCampaignBudgetUSD:200}));
