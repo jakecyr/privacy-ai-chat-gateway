@@ -13,7 +13,7 @@ export function validateRequest(value) {
 export function activeRoute(configuration, id, now = Date.now()) {
   if (!configuration || configuration.enabled !== true || !Number.isFinite(configuration.fetchedAt) || now - configuration.fetchedAt > 15000 || configuration.fetchedAt > now) throw new GatewayError(503,'route_unavailable',15);
   const route = configuration.routes?.find(r => r.id === id);
-  const spec=routeSpecification(id);
+  const spec=routeSpecification(id,route);
   if (!spec || !route || route.enabled!==true || !/^[a-z0-9-]{1,80}$/.test(route.id) || !Number.isSafeInteger(route.disclosureVersion) || route.disclosureVersion<1 || route.provider !== spec.provider || route.model !== spec.model || route.disclosureVersion!==1 || !verifiedRouteEvidence(route,now) || route.retentionProfile !== 'zdr' || !Number.isFinite(route.verifiedUntil) || route.verifiedUntil <= now) throw new GatewayError(503,'route_unavailable',15);
   return Object.freeze({...route});
 }
@@ -24,7 +24,7 @@ export function publicModels(configuration,now=Date.now()) {
   for(const candidate of configuration.routes??[]) {
     try {
       const route=activeRoute(configuration,candidate.id,now);
-      routes.push({id:route.id,provider:route.provider,model:route.model,disclosureVersion:route.disclosureVersion});
+      routes.push({id:route.id,provider:route.provider,model:route.model,disclosureVersion:route.disclosureVersion,...(route.profile?{profile:route.profile,reasoning:route.reasoning,label:route.label}: {})});
     } catch(error) { if(!(error instanceof GatewayError)) throw error; }
   }
   return {version:configuration.version,routes};

@@ -1,0 +1,5 @@
+{
+  "OpenAI":{"inputMicroUSDPerToken":1,"outputMicroUSDPerToken":5},
+  "Claude":{"inputMicroUSDPerToken":2,"outputMicroUSDPerToken":10},
+  "Gemini":{"inputMicroUSDPerToken":4.4,"outputMicroUSDPerToken":22}
+}

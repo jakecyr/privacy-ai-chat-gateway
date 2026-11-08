@@ -1,3 +1,4 @@
+import {routeSpecification} from './route-specs.js';
 import { GatewayError } from './admission.js';
 import {openAIPayload} from './openai-payload.js';
 export {openAIPayload} from './openai-payload.js';
@@ -8,13 +9,14 @@ export function openAIAdapter({apiKey,fetchImpl=fetch,onUsageViolation=async()=>
   const generate=async function* generate(route,input,signal) {
     if (quarantined) throw new GatewayError(503,'route_unavailable');
     validateInputBudget(route,input);
-    if (route.model !== 'gpt-5.6-terra' || route.provider !== 'OpenAI') throw new GatewayError(503,'route_unavailable');
+    const spec=routeSpecification(route.id??'openai-terra-text',route);
+    if (!spec || route.model !== spec.model || route.provider !== 'OpenAI') throw new GatewayError(503,'route_unavailable');
     let response;
     try {
       response = await fetchImpl('https://api.openai.com/v1/responses',{
         method:'POST',redirect:'error',signal,
         headers:{Authorization:`Bearer ${apiKey}`,'Content-Type':'application/json'},
-        body:JSON.stringify(openAIPayload(input)),
+        body:JSON.stringify(openAIPayload(input,spec)),
       });
     } catch { throw new GatewayError(503,signal.aborted ? 'upstream_timeout' : 'upstream_failure'); }
     if (!response.ok || !response.body) { await response.body?.cancel(); throw new GatewayError(503,'upstream_failure'); }
@@ -49,7 +51,7 @@ export function openAIAdapter({apiKey,fetchImpl=fetch,onUsageViolation=async()=>
             if (!modelVerified || event.response?.model !== route.model) throw new GatewayError(503,'upstream_failure');
             const length = event.type === 'response.incomplete' && event.response?.incomplete_details?.reason === 'max_output_tokens';
             if (event.type === 'response.incomplete' && !length) throw new GatewayError(503,'upstream_failure');
-            try { validateOpenAIUsage(event.response.usage); }
+            try { validateOpenAIUsage(event.response.usage,spec); }
             catch {
               quarantined=true;
               // Persist only a content-free circuit breaker. Never forward usage payloads.

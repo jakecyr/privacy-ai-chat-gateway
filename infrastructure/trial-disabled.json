@@ -1,7 +1,7 @@
 {
   "enabled": false,
   "campaignID": "launch-v1",
-  "accountUnits": 250000,
-  "campaignUnits": 250000000,
+  "accountUnits": 200000,
+  "campaignUnits": 200000000,
   "claimLimit": 1000
 }

@@ -1,27 +1,28 @@
 import {GatewayError} from './admission.js';
 import {providerJSONEvents,conversationMessages,CONTEXT_INSTRUCTIONS} from './provider-stream.js';
 
-import {GEMINI_SPEC} from './route-specs.js';
+import {GEMINI_SPEC,routeSpecification} from './route-specs.js';
 export {GEMINI_SPEC} from './route-specs.js';
-export function geminiPayload(input) {
+export function geminiPayload(input,spec=GEMINI_SPEC) {
   return {systemInstruction:{parts:[{text:CONTEXT_INSTRUCTIONS}]},
     contents:conversationMessages(input,'model').map(message=>({role:message.role,parts:message.texts.map(text=>({text}))})),
     // Gemini 3.8 rejects candidateCount. It produces one candidate; the receiver
     // also rejects multiple candidates. No cache, grounding, tools or continuation.
-    generationConfig:{maxOutputTokens:GEMINI_SPEC.outputTokens,thinkingConfig:{thinkingLevel:'LOW',includeThoughts:false}}};
+    generationConfig:{maxOutputTokens:spec.outputTokens,thinkingConfig:{thinkingLevel:(spec.reasoning??'low').toUpperCase(),includeThoughts:false}}};
 }
 export function validateGeminiInput(route,input) {
-  if(route.provider!==GEMINI_SPEC.provider || route.model!==GEMINI_SPEC.model)throw new GatewayError(503,'route_unavailable');
-  const payload=geminiPayload(input);
+  const spec=routeSpecification(route.id??GEMINI_SPEC.id,route);
+  if(!spec || route.provider!==GEMINI_SPEC.provider || route.model!==spec.model)throw new GatewayError(503,'route_unavailable');
+  const payload=geminiPayload(input,spec);
   const estimate=1024+Buffer.byteLength(CONTEXT_INSTRUCTIONS)+payload.contents.reduce((sum,message)=>sum+message.parts.reduce((n,part)=>n+Buffer.byteLength(part.text),0),0);
-  if(estimate>GEMINI_SPEC.inputTokens)throw new GatewayError(413,'input_limit');
+  if(estimate>spec.inputTokens)throw new GatewayError(413,'input_limit');
   return estimate;
 }
-function validUsage(usage) {
+function validUsage(usage,spec=GEMINI_SPEC) {
   const integer=value=>Number.isSafeInteger(value)&&value>=0;
-  if(!usage || !integer(usage.promptTokenCount)||usage.promptTokenCount>GEMINI_SPEC.inputTokens ||
+  if(!usage || !integer(usage.promptTokenCount)||usage.promptTokenCount>spec.inputTokens ||
      !integer(usage.candidatesTokenCount)||!integer(usage.totalTokenCount) ||
-     !integer(usage.thoughtsTokenCount??0) || usage.candidatesTokenCount+(usage.thoughtsTokenCount??0)>GEMINI_SPEC.outputTokens ||
+     !integer(usage.thoughtsTokenCount??0) || usage.candidatesTokenCount+(usage.thoughtsTokenCount??0)>spec.outputTokens ||
      usage.totalTokenCount!==usage.promptTokenCount+usage.candidatesTokenCount+(usage.thoughtsTokenCount??0) ||
      (usage.cachedContentTokenCount??0)!==0 || (usage.toolUsePromptTokenCount??0)!==0) return false;
   return true;
@@ -30,27 +31,28 @@ export function geminiAdapter({projectID,location,getAccessToken,fetchImpl=fetch
   if(typeof projectID!=='string'||!/^[a-z][a-z0-9-]{4,28}[a-z0-9]$/.test(projectID) ||
      !['global','us','eu'].includes(location) || typeof getAccessToken!=='function')throw new Error('provider_configuration_missing');
   const host=location==='global'?'aiplatform.googleapis.com':`${location}-aiplatform.googleapis.com`;
-  const endpoint=`https://${host}/v1/projects/${projectID}/locations/${location}/publishers/google/models/${GEMINI_SPEC.model}:streamGenerateContent?alt=sse`;
+  const endpointFor=model=>`https://${host}/v1/projects/${projectID}/locations/${location}/publishers/google/models/${model}:streamGenerateContent?alt=sse`;
   let quarantined=false;
   const violation=async()=>{quarantined=true;await Promise.resolve().then(onContractViolation).catch(()=>{});throw new GatewayError(503,'upstream_failure');};
   const generate=async function* generate(route,input,signal) {
     if(quarantined)throw new GatewayError(503,'route_unavailable');
     validateGeminiInput(route,input);
+    const spec=routeSpecification(route.id??GEMINI_SPEC.id,route);
     let response;
     try {
       const token=await getAccessToken(signal);
       if(signal.aborted)throw new Error();
       if(typeof token!=='string'||!token.length)throw new Error();
-      response=await fetchImpl(endpoint,{method:'POST',redirect:'error',signal,headers:{Authorization:`Bearer ${token}`,'x-goog-user-project':projectID,'Content-Type':'application/json'},body:JSON.stringify(geminiPayload(input))});
+      response=await fetchImpl(endpointFor(spec.model),{method:'POST',redirect:'error',signal,headers:{Authorization:`Bearer ${token}`,'x-goog-user-project':projectID,'Content-Type':'application/json'},body:JSON.stringify(geminiPayload(input,spec))});
     } catch {throw new GatewayError(503,signal.aborted?'upstream_timeout':'upstream_failure');}
     let modelVerified=false,reason,outputBytes=0;
     for await(const {object:value} of providerJSONEvents(response,signal)) {
       if(value.error)throw new GatewayError(503,'upstream_failure');
       if(value.modelVersion!==undefined) {
-        if(value.modelVersion!==GEMINI_SPEC.model)await violation();
+        if(value.modelVersion!==spec.model)await violation();
         modelVerified=true;
       }
-      if(value.usageMetadata!==undefined && !validUsage(value.usageMetadata))await violation();
+      if(value.usageMetadata!==undefined && !validUsage(value.usageMetadata,spec))await violation();
       if(value.promptFeedback?.blockReason)throw new GatewayError(503,'content_blocked');
       if(value.candidates!==undefined) {
         if(!Array.isArray(value.candidates)||value.candidates.length>1)await violation();

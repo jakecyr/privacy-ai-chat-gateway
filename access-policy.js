@@ -1,4 +1,4 @@
-import {ROUTE_SPECS} from './route-specs.js';
+import {ROUTE_SPECS,routeSpecification} from './route-specs.js';
 import {validateIssuerCreditPolicy} from './token-budget.js';
 import {validateTrialPolicy} from './trial-access.js';
 
@@ -9,5 +9,5 @@ export function accessPolicy(config,trial) {
     trial:{enabled:trial.enabled,limitUnits:trial.accountUnits,reset:'lifetime_apple_account'},
     subscription:{limitUnits:config.monthlyUnits,productIDs:[...config.productIDs],reset:'verified_apple_renewal',rollover:false},
     reservation:'per_attempt_no_refund',
-    routes:Object.entries(config.routeCosts).map(([id,units])=>({id,provider:ROUTE_SPECS[id].provider,model:ROUTE_SPECS[id].model,units}))});
+    routes:Object.entries(config.routeCosts).map(([id,units])=>{const configured=config.modelRoutes?.find(route=>route.id===id);const spec=routeSpecification(id,configured);return {id,provider:spec.provider,model:spec.model,units,...(spec.dynamic?{reasoning:spec.reasoning,profile:spec.profile,label:configured.label}:{})};})});
 }

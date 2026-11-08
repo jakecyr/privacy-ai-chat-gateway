@@ -30,7 +30,7 @@ async function start() {
   const paid=voucherIssuer({verifyTransaction,reserve:firestoreAllowance(getFirestore(billing)),readAllowance:firestoreAllowanceReader(getFirestore(billing)),includeAllowance:true,privateKey:voucherKey,
     kid:process.env.VOUCHER_KEY_ID,issuer:process.env.VOUCHER_ISSUER,audience:process.env.VOUCHER_AUDIENCE,hmacKey,
     routeCosts:config.routeCosts,monthlyUnits:config.monthlyUnits});
-  const trialPolicy=config.trial??{enabled:false,campaignID:'launch-v1',accountUnits:250000,campaignUnits:250000000,claimLimit:1000};
+  const trialPolicy=config.trial??{enabled:false,campaignID:'launch-v1',accountUnits:200000,campaignUnits:200000000,claimLimit:1000};
   const trial=trialIssuer({verifyIdentity:appleAppIdentityVerifier({...config,verifier}),allowance:firestoreTrialAllowance(getFirestore(billing),trialPolicy),privateKey:voucherKey,
     kid:process.env.VOUCHER_KEY_ID,issuer:process.env.VOUCHER_ISSUER,audience:process.env.VOUCHER_AUDIENCE,hmacKey,routeCosts:config.routeCosts,policy:trialPolicy});
   const selected=body=>Object.hasOwn(body,'signedTransaction')?paid:trial;

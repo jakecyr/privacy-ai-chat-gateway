@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "models": [
+    {"id":"openai","provider":"OpenAI","label":"GPT-6.1 Terra","model":"gpt-6.1-terra","reasoning":["none","low","medium","high","xhigh","max"],"defaultReasoning":"none"},
+    {"id":"claude","provider":"Claude","label":"Claude Sonnet 5.5","model":"claude-sonnet-5-5","reasoning":["low","medium","high","max"],"defaultReasoning":"medium"},
+    {"id":"gemini","provider":"Gemini","label":"Gemini 4 Argon","model":"gemini-4-argon","reasoning":["low","medium","high"],"defaultReasoning":"low"}
+  ]
+}

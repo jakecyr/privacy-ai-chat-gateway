@@ -1,0 +1,8 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Public model metadata only. No chat, memory, billing or user fields.
+    match /public/modelCatalog { allow get: if true; allow list, write: if false; }
+    match /{document=**} { allow read, write: if false; }
+  }
+}

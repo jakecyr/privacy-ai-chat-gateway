@@ -33,7 +33,7 @@ async function start() {
   const quota=new DailyQuota({reserve:firestoreReservation(database)});
   const registrations=new Map();
   const disable=()=>database.doc('runtime/gateway').update({enabled:false,disabledFor:'provider_contract'});
-  const register=(spec,generate,target)=>registrations.set(spec.id,{generate,targetDigest:providerTargetDigest(spec,target)});
+  const register=(spec,generate,target)=>{const registration={generate,target,targetDigest:providerTargetDigest(spec,target)};registrations.set(spec.id,registration);registrations.set(spec.provider,registration);};
   const readCredential=async path=>(await readFile(path,'utf8')).trim();
   const fingerprint=key=>createHash('sha256').update(key).digest('hex');
   if(keyFile) {
