@@ -66,14 +66,17 @@ export function firestoreAllowanceReader(database) {
     return {limitUnits:periodLimit,remainingUnits:Math.max(0,periodLimit-reserved)};
   };
 }
-export function voucherIssuer({verifyTransaction,reserve,readAllowance,includeAllowance=false,privateKey,kid,issuer,audience,hmacKey,routeCosts,monthlyUnits,now=()=>Math.floor(Date.now()/1000)}) {
+export function voucherIssuer({verifyTransaction,reserve,readAllowance,includeAllowance=false,privateKey,kid,issuer,audience,hmacKey,routeCosts,monthlyUnits,monthlyUnitsByProduct,now=()=>Math.floor(Date.now()/1000)}) {
   if (!Number.isSafeInteger(monthlyUnits) || monthlyUnits < 1 || monthlyUnits > 1000000000 || !routeCosts || !Object.keys(routeCosts).length || Object.values(routeCosts).some(cost=>!Number.isSafeInteger(cost)||cost<1||cost*5>10000000)) throw new Error('invalid_credit_configuration');
   const costs = Object.freeze({...routeCosts});
+  const planLimits = monthlyUnitsByProduct && Object.freeze({...monthlyUnitsByProduct});
   const authorize=async({signedTransaction,route,count=1})=>{
     if(typeof signedTransaction!=='string'||signedTransaction.length>32768||!Object.hasOwn(costs,route)||!Number.isSafeInteger(count)||count<1||count>5) throw new GatewayError(400,'invalid_request');
     const entitlement=await verifyTransaction(signedTransaction),timestamp=now();
     if(!entitlement?.active || !Number.isSafeInteger(entitlement.expiresAt)||entitlement.expiresAt<=timestamp || !entitlement.originalTransactionID || typeof entitlement.periodTransactionID!=='string' || !entitlement.periodTransactionID.length || entitlement.periodTransactionID.length>256) throw new GatewayError(403,'subscription_inactive');
-    return {entitlement,timestamp,ledgerID:billingLedgerID(entitlement.originalTransactionID,hmacKey),window:billingLedgerID('period:'+entitlement.periodTransactionID,hmacKey),units:count*costs[route],limit:monthlyUnits};
+    const limit=planLimits ? (Object.hasOwn(planLimits,entitlement.productID)?planLimits[entitlement.productID]:undefined) : monthlyUnits;
+    if(!Number.isSafeInteger(limit)||limit<1||limit>monthlyUnits) throw new GatewayError(403,'subscription_inactive');
+    return {entitlement,timestamp,ledgerID:billingLedgerID(entitlement.originalTransactionID,hmacKey),window:billingLedgerID('period:'+entitlement.periodTransactionID,hmacKey),units:count*costs[route],limit};
   };
   const summary=(state,owner,route)=>{
     if(!state||!Number.isSafeInteger(state.limitUnits)||state.limitUnits<1||state.limitUnits>1000000000||!Number.isSafeInteger(state.remainingUnits)||state.remainingUnits<0||state.remainingUnits>state.limitUnits)throw new GatewayError(503,'allowance_unavailable');

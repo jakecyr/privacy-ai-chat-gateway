@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { DailyQuota, activeRoute, publicModels, cachedConfiguration, verifyAttestation, GatewayError } from '../admission.js';
 import { createProductionServer } from '../production-server.js';
+import { catalogRouteID, OPENAI_STANDARD_PROFILE } from '../route-specs.js';
 const route = {id:'openai-terra-text',provider:'OpenAI',model:'gpt-5.6-terra',disclosureVersion:1,enabled:true,retentionProfile:'zdr',verifiedUntil:Date.now()+3600000,targetDigest:'a'.repeat(64),verification:{evidenceDigest:'b'.repeat(64),reviewedAt:Date.now(),agreementApproved:true,payloadVerified:true,cacheDisabled:true,loggingDisabled:true,abuseMonitoringApproved:true,persistentUserIDNotRequired:true,pricingVerified:true}};
 test('route evidence expires and stale configuration fails closed', () => {
  const now = Date.now(); const config = {enabled:true,fetchedAt:now,routes:[route]};
@@ -9,6 +10,18 @@ test('route evidence expires and stale configuration fails closed', () => {
  assert.throws(() => activeRoute({...config,fetchedAt:now-15001},route.id,now));
  assert.throws(() => activeRoute({...config,routes:[{...route,verifiedUntil:now}]},route.id,now));
  assert.throws(() => activeRoute({...config,enabled:false},route.id,now));
+});
+test('the paid OpenAI route requires its own standard retention disclosure', () => {
+ const now=Date.now(), model='gpt-6.1-terra', reasoning='medium';
+ const standard={...route,id:'standard-'+catalogRouteID('OpenAI',model,reasoning),model,reasoning,label:'GPT-6.1 Terra',
+  profile:OPENAI_STANDARD_PROFILE,disclosureVersion:3,retentionProfile:'standard',inputTokens:32768,outputTokens:3600,
+  inputMicroUSDPerToken:1,outputMicroUSDPerToken:5};
+ const admission=entry=>activeRoute({enabled:true,fetchedAt:now,routes:[entry]},entry.id,now);
+ assert.throws(()=>admission(standard));
+ standard.verification={...standard.verification,standardRetentionDisclosed:true,abuseMonitoringApproved:false};
+ assert.equal(admission(standard).disclosureVersion,3);
+ assert.throws(()=>admission({...standard,disclosureVersion:2}));
+ assert.throws(()=>admission({...standard,retentionProfile:'zdr'}));
 });
 test('public discovery projects only eligible public fields and honors shutdown',()=>{
  const now=Date.now();

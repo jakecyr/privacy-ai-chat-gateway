@@ -1,5 +1,5 @@
 {
-  "sourceTreeSHA256": "a40692032515b2d756a0707a03e50d0db773a65b6df3ed401d4019ca7ad67a2d",
+  "sourceTreeSHA256": "29d574570ffbf8501e8d5cfa055163f01eb3c293c1a8b7a3cb149f777b1e5034",
   "hashScope": "sorted UTF-8 path, NUL, binary SHA-256 per listed file; manifest excluded",
   "license": "Apache-2.0",
   "deploymentVerification": "not established by this source snapshot",
@@ -41,28 +41,28 @@
     },
     {
       "path": "PROVIDER_VERIFICATION.md",
-      "sha256": "b915d8e1b2c2043d7a55295ae3a50ad40bfe38d5bf0b9c2ab5b552b2f99ab105",
-      "bytes": 9069
+      "sha256": "5057173548f1ce73dfe321427a1e83a3f3bff5ddb6ddcc9e8dbb8cf9f5fd6323",
+      "bytes": 9481
     },
     {
       "path": "README.md",
-      "sha256": "173b63ec943583e9c04c8ed5c97ece0453a7210373989ba725c55cf7ba9aa4d2",
-      "bytes": 12459
+      "sha256": "18869bb21ba9c8d4af7171bd042e22640cfe5d031fb736489bfbdfd40617dea4",
+      "bytes": 13476
     },
     {
       "path": "access-policy.js",
-      "sha256": "04b531b51ac956fb07112f70694eec793e869f0fe4b43154737cfad2b4fe577c",
-      "bytes": 1022
+      "sha256": "acefb05ae78814c090cfc083d86b44ff0f4dfbc2bbaf2d04dca317c9a4c39659",
+      "bytes": 1214
     },
     {
       "path": "admission.js",
-      "sha256": "6a5221a34a473c845bdaba8193c449829a8a6742b4ec260b76a2a6e57a87dd18",
-      "bytes": 5763
+      "sha256": "e7936ace6196ca355b0188ce5f63c47880417262be6f786e6392d8230fd15011",
+      "bytes": 6925
     },
     {
       "path": "apple-entitlement.js",
-      "sha256": "d9e7a3e14f7f0696f47dedc83bf033dab798a1f48038784bf9a20ead53167f34",
-      "bytes": 3736
+      "sha256": "fa631310e9098bd79a4980d8799996d9a037b98cbea3ea0d37037ae8a33b6657",
+      "bytes": 3795
     },
     {
       "path": "apple-notifications.js",
@@ -71,13 +71,13 @@
     },
     {
       "path": "billing-runtime.js",
-      "sha256": "63934cdb61e9a66ff8033a2a5e936403f01a8220d1ed42df7b6e0e5c9b53aec8",
-      "bytes": 3751
+      "sha256": "90d1164f42aceee879b92d2171f7143a2768d963e50b7a37b69cd279d1e9e591",
+      "bytes": 4410
     },
     {
       "path": "billing-server.js",
-      "sha256": "f74276ccaf5cb2ecfb1973a4ffc3ce8ece41bb88c7b0b1b7e403d6135f307028",
-      "bytes": 4595
+      "sha256": "d5d5465fde6a516293116160eda9cc289abfeb2dfc7da1f20b87fe89b550679c",
+      "bytes": 5484
     },
     {
       "path": "claude-adapter.js",
@@ -91,13 +91,18 @@
     },
     {
       "path": "commercial-policy.js",
-      "sha256": "512bd6f64e6f827aa48bbe8a59ee8e8378d22ee5c75d1ea901416a6bc1d7ee83",
-      "bytes": 1047
+      "sha256": "d9b636e75c00f8ca47840264521ed96ae3854a4aeb0e0ba7fb8aabaf41931cad",
+      "bytes": 2533
     },
     {
       "path": "dependencies.json",
       "sha256": "777ab34a1b842f270122ca61c88ed3a482ac50ac13b90c637ebee97095ca4adf",
       "bytes": 57307
+    },
+    {
+      "path": "dictation.js",
+      "sha256": "e70e14adbfb90c1ef21e007874a40fab610756e5be412140b1b50611dc75f6f5",
+      "bytes": 2279
     },
     {
       "path": "gemini-adapter.js",
@@ -106,18 +111,18 @@
     },
     {
       "path": "http-boundaries.js",
-      "sha256": "016eb6ed7d469a5fe22dbe1c36128ab6182776ef04ebdbe05914e8df6fba2ac5",
-      "bytes": 1668
+      "sha256": "46737d582d321e030dc2695f5e36491efd0d1a9fd1b710461b0a410a5f6954f0",
+      "bytes": 1790
     },
     {
       "path": "inference-economics.mjs",
-      "sha256": "ec17237adb4da70853d67732465eaa559f9c8253e4bd161c200eb49215235131",
-      "bytes": 3229
+      "sha256": "6b5a2bb16f0f330945f98a99481c54b7869f0de416c9cfc8fd474b32d08932e6",
+      "bytes": 4587
     },
     {
       "path": "infrastructure/README.md",
-      "sha256": "87157c7058f3e913df5eb41c4fbc619f1897c7e7a8f1c15ab529798eba235aae",
-      "bytes": 7146
+      "sha256": "df034770d97094c442fbe44b1148121f44af8ce3dadf443522be8fe7af3d0f53",
+      "bytes": 9584
     },
     {
       "path": "infrastructure/attestation.service.yaml",
@@ -156,18 +161,18 @@
     },
     {
       "path": "infrastructure/model-catalog.json",
-      "sha256": "e809f926ff4f0937407560c708a890b41f79725917bcf0fa957529e9aec6c7dc",
-      "bytes": 528
+      "sha256": "a5997f14712ab50642c5359912dff83effe75fd6f48cf94fe24ff08a20fc0703",
+      "bytes": 863
     },
     {
       "path": "infrastructure/model-pricing.json",
-      "sha256": "77f912af99ae44434f4f632b861a41cd41d85cec41052ab0418ae5954b29b341",
-      "bytes": 208
+      "sha256": "f229b8d7fe514494098da2d19abae95e5db567b1dfa1cf1f83808aed79399723",
+      "bytes": 356
     },
     {
       "path": "infrastructure/model-routes-disabled.json",
-      "sha256": "4d3f705c35a94eb5fa25b8d0711d53a94beafba15a4ec594fcf8ab07e53b76f2",
-      "bytes": 23662
+      "sha256": "ff2197426fc152fac904881b2200ce84d6d26eef27815ad51c5f675f8be5013f",
+      "bytes": 43001
     },
     {
       "path": "infrastructure/route-disabled.json",
@@ -190,6 +195,11 @@
       "bytes": 4676
     },
     {
+      "path": "openai-beta.js",
+      "sha256": "0e5130a8354795ab028cfb88354231a87a06ca50cc9ef9f97e329f88527bfbfa",
+      "bytes": 3696
+    },
+    {
       "path": "openai-payload.js",
       "sha256": "87412a248ab8efb065c963501d3c2111c4bde40bb4efd09b824190b57d58f0ff",
       "bytes": 709
@@ -206,8 +216,8 @@
     },
     {
       "path": "production-server.js",
-      "sha256": "8df8200a074f58028334f8c9a3451a145d4d5784eee43158228521260864e2af",
-      "bytes": 7308
+      "sha256": "37972db0d98e8a908bf7dbe95efb621392c1ee1660c068240641949a6d76ce12",
+      "bytes": 8933
     },
     {
       "path": "protocol.schema.json",
@@ -226,18 +236,18 @@
     },
     {
       "path": "render-model-routes.mjs",
-      "sha256": "8518efed856015309751dd6499dc5108a6ab51af69357019625d753938cd9630",
-      "bytes": 1918
+      "sha256": "e5a08fdd4f362c3db2f9f3946e1c1b235699aaa42b07ec233aa803a7f8a5e133",
+      "bytes": 2612
     },
     {
       "path": "route-specs.js",
-      "sha256": "425303ccfaf35821c5f050c7ecafb5f4c8c9bcf099fd2c7dd0e6279a09481647",
-      "bytes": 3369
+      "sha256": "7b533de218d06dee191f375db2c3318338402484c7949b163d2f562c042c523b",
+      "bytes": 4278
     },
     {
       "path": "runtime.js",
-      "sha256": "d1a8c35b62c90ddead0b2950ce8bf8c4ffcd54099a8dd59375de82ab3cfff9c2",
-      "bytes": 4996
+      "sha256": "481785d19381869a773fe997f5cbd02f31f1c04620fa4026daeae2125c513e6f",
+      "bytes": 5882
     },
     {
       "path": "server.js",
@@ -246,13 +256,13 @@
     },
     {
       "path": "test/admission.test.js",
-      "sha256": "cce7ead004ed27695e970e964c4821045031ccb83d46368dcbd5970cd916c43b",
-      "bytes": 5482
+      "sha256": "1a75d85bf00bd321904bca2cd4eabaf58f864ef8b32f44151e4e6aeac72540fa",
+      "bytes": 6447
     },
     {
       "path": "test/apple-entitlement.test.js",
-      "sha256": "054959b1e674babb9c3dca196149ce300c67c036bd63ed02a6f5a49544954701",
-      "bytes": 2780
+      "sha256": "bc99a6966ed1b78456032a6781e14052a37cb83ff1155ff4eb3fa97cd4ae0177",
+      "bytes": 2800
     },
     {
       "path": "test/apple-notifications.test.js",
@@ -275,9 +285,24 @@
       "bytes": 6711
     },
     {
+      "path": "test/cloud-access-models.test.js",
+      "sha256": "2a079806c414cf64fb629d55e8ba39620973352c2f56c4ba4d36e7ebb5c029e5",
+      "bytes": 6811
+    },
+    {
       "path": "test/configurable-models.test.js",
       "sha256": "cd01767ffa899ceed20daf132bef7c48d346a3fca7cb6fcd023ea635cf94e0cd",
       "bytes": 6668
+    },
+    {
+      "path": "test/conversation-context.test.js",
+      "sha256": "537c71ab843bf20c75296663b37da39660783ff2f9f953ce479375d3e60d8a2e",
+      "bytes": 1935
+    },
+    {
+      "path": "test/dictation.test.js",
+      "sha256": "9d52b906c9dd83665b65100cfb4891a0e82c36aec03b1a0db0a9c037c34393f0",
+      "bytes": 3965
     },
     {
       "path": "test/gemini.test.js",
@@ -293,6 +318,11 @@
       "path": "test/model-routes-fixture.json",
       "sha256": "4d3f705c35a94eb5fa25b8d0711d53a94beafba15a4ec594fcf8ab07e53b76f2",
       "bytes": 23662
+    },
+    {
+      "path": "test/openai-beta.test.js",
+      "sha256": "4efd90b2dbe0aa9631060be4766505af2181018194c2f68715617b33ba6a9e69",
+      "bytes": 5090
     },
     {
       "path": "test/openai.test.js",
@@ -311,8 +341,8 @@
     },
     {
       "path": "test/token-budget.test.js",
-      "sha256": "5a6cfd275dcb515539011019c467673aa6d531cf9be7acbdfc8cb8aa568110fb",
-      "bytes": 5025
+      "sha256": "7c766a95cff3016e5871dd3a5cbe1aa657e534b85f3e11b8931d08b727142041",
+      "bytes": 5681
     },
     {
       "path": "test/tokenizer-fixtures.json",
@@ -326,13 +356,13 @@
     },
     {
       "path": "test/vouchers.test.js",
-      "sha256": "9ed542ab1a66c8fac94fa075b539376edf15b55db45408ed5579e69fb5a32c54",
-      "bytes": 6966
+      "sha256": "ee9a4f2507c771cf30f0141f1a268013030a7a2cb4cb8fccfad45f5b500d5a4f",
+      "bytes": 7885
     },
     {
       "path": "token-budget.js",
-      "sha256": "0c0f627d27a9fdc78f68814f4a3bc2ca18fe79dcaee5e33db99ac5eaef1be7a9",
-      "bytes": 3682
+      "sha256": "59701d26069d4f21e053d18ed69bd0cbdc194e30e44bfbe00739e717a92fdb23",
+      "bytes": 3673
     },
     {
       "path": "tools/inventory-logging.py",
@@ -346,8 +376,8 @@
     },
     {
       "path": "tools/update-model-catalog.mjs",
-      "sha256": "9e93613592845eb1c2f631a29945e689e48460c49730de17aa346ef69265d970",
-      "bytes": 2594
+      "sha256": "0317779e4af58bf0b88a519fc066dbf2293ea0ed0f728381d49b232a9e67e19e",
+      "bytes": 2765
     },
     {
       "path": "tools/verify-source.mjs",
@@ -361,8 +391,8 @@
     },
     {
       "path": "vouchers.js",
-      "sha256": "0b8438dbd1baa65bb3dd3dccb88871013c105fd2e163a966d780253c6f3ea365",
-      "bytes": 8124
+      "sha256": "b6bd1af2535c779a953317841b9c41fda9231819d720ddd785269762b9a41ee7",
+      "bytes": 8480
     }
   ]
 }

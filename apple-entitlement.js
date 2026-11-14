@@ -15,7 +15,7 @@ export function appleEntitlementVerifier({verifier,api,bundleID,productIDs,envir
       for(const group of status.data ?? []) for(const item of group.lastTransactions ?? []) {
         if (![1,4].includes(item.status) || !item.signedTransactionInfo) continue;
         const current=check(await verifier.verifyAndDecodeTransaction(item.signedTransactionInfo));
-        if (current.originalTransactionId!==presented.originalTransactionId) continue;
+        if (current.originalTransactionId!==presented.originalTransactionId || current.isUpgraded === true) continue;
         if(typeof current.transactionId!=='string' || !current.transactionId.length || current.transactionId.length>256 ||
            !Number.isSafeInteger(current.purchaseDate) || current.purchaseDate<=0 || current.purchaseDate>now() ||
            !Number.isSafeInteger(current.expiresDate) || current.expiresDate<=current.purchaseDate) continue;
@@ -27,7 +27,7 @@ export function appleEntitlementVerifier({verifier,api,bundleID,productIDs,envir
           expiresAt=renewal.gracePeriodExpiresDate;
         }
         if(!Number.isSafeInteger(expiresAt)||expiresAt<=now()) continue;
-        return {active:true,originalTransactionID:current.originalTransactionId,periodTransactionID:current.transactionId,periodEndsAt:Math.floor(current.expiresDate/1000),inGracePeriod:item.status===4,expiresAt:Math.floor(expiresAt/1000)};
+        return {active:true,productID:current.productId,originalTransactionID:current.originalTransactionId,periodTransactionID:current.transactionId,periodEndsAt:Math.floor(current.expiresDate/1000),inGracePeriod:item.status===4,expiresAt:Math.floor(expiresAt/1000)};
       }
       throw new GatewayError(403,'subscription_inactive');
     } catch(error) {

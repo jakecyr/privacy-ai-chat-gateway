@@ -8,7 +8,7 @@ function verifierFor({transaction=current,status=1,grace,apiError=false}={}) {
  api:{getAllSubscriptionStatuses:async()=>{if(apiError)throw new Error('PRIVATE_ERROR');return {bundleId:'app',environment:'Sandbox',data:[{lastTransactions:[{status,signedTransactionInfo:'current',signedRenewalInfo:grace?'renewal':undefined}]}]};}}});
 }
 test('issuance reconciles signed transaction with current Apple state',async()=>{
- assert.deepEqual(await verifierFor()('presented'),{active:true,originalTransactionID:'original',periodTransactionID:'paid-period-1',periodEndsAt:2000,inGracePeriod:false,expiresAt:2000});
+ assert.deepEqual(await verifierFor()('presented'),{active:true,productID:'monthly',originalTransactionID:'original',periodTransactionID:'paid-period-1',periodEndsAt:2000,inGracePeriod:false,expiresAt:2000});
  for(const options of [{status:5},{status:2},{transaction:{...current,revocationDate:900000}},{transaction:{...current,productId:'other'}},{transaction:{...current,environment:'Production'}},{transaction:{...current,expiresDate:500000}},{transaction:{...current,originalTransactionId:'another'}},{transaction:{...current,transactionId:undefined}},{transaction:{...current,purchaseDate:undefined}},{transaction:{...current,purchaseDate:1000001}},{transaction:{...current,purchaseDate:2100000}}]) await assert.rejects(verifierFor(options)('presented'));
 });
 test('grace period requires verified matching renewal and expires at grace end',async()=>{

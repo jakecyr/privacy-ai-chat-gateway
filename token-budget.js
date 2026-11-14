@@ -21,7 +21,7 @@ export function validateInputBudget(route,input) {
   if(route.provider!=='OpenAI'||!spec||route.model!==spec.model) throw new GatewayError(503,'route_unavailable');
   const payload=openAIPayload(input,spec);
   const tokens=spec.dynamic?1024+Buffer.byteLength(payload.instructions)+payload.input.reduce((n,m)=>n+Buffer.byteLength(m.content),0):estimatedOpenAIInputTokens(input);
-  if(tokens>OPENAI_BUDGET.inputTokens) throw new GatewayError(413,'input_limit');
+  if(tokens>spec.inputTokens) throw new GatewayError(413,'input_limit');
   return tokens;
 }
 export function validateOpenAIUsage(usage,spec=OPENAI_BUDGET) {

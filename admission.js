@@ -1,4 +1,5 @@
-import {routeSpecification,verifiedRouteEvidence} from './route-specs.js';
+import {OPENAI_STANDARD_PROFILE,routeSpecification,verifiedRouteEvidence} from './route-specs.js';
+import {createHash} from 'node:crypto';
 export class GatewayError extends Error {
   constructor(status, code, retryAfter) { super(code); this.status = status; this.code = code; this.retryAfter = retryAfter; }
 }
@@ -14,16 +15,17 @@ export function activeRoute(configuration, id, now = Date.now()) {
   if (!configuration || configuration.enabled !== true || !Number.isFinite(configuration.fetchedAt) || now - configuration.fetchedAt > 15000 || configuration.fetchedAt > now) throw new GatewayError(503,'route_unavailable',15);
   const route = configuration.routes?.find(r => r.id === id);
   const spec=routeSpecification(id,route);
-  if (!spec || !route || route.enabled!==true || !/^[a-z0-9-]{1,80}$/.test(route.id) || !Number.isSafeInteger(route.disclosureVersion) || route.disclosureVersion<1 || route.provider !== spec.provider || route.model !== spec.model || route.disclosureVersion!==1 || !verifiedRouteEvidence(route,now) || route.retentionProfile !== 'zdr' || !Number.isFinite(route.verifiedUntil) || route.verifiedUntil <= now) throw new GatewayError(503,'route_unavailable',15);
+  const standard=spec?.profile===OPENAI_STANDARD_PROFILE;
+  if (!spec || !route || route.enabled!==true || !/^[a-z0-9-]{1,80}$/.test(route.id) || route.provider !== spec.provider || route.model !== spec.model || route.disclosureVersion!==(standard?3:1) || route.retentionProfile!==(standard?'standard':'zdr') || !verifiedRouteEvidence(route,now) || !Number.isFinite(route.verifiedUntil) || route.verifiedUntil <= now) throw new GatewayError(503,'route_unavailable',15);
   return Object.freeze({...route});
 }
 
-export function publicModels(configuration,now=Date.now()) {
+export function publicModels(configuration,now=Date.now(),resolveRoute=activeRoute) {
   if(!configuration || !Number.isSafeInteger(configuration.version) || configuration.version<1 || !Number.isFinite(configuration.fetchedAt) || now-configuration.fetchedAt>15000 || configuration.fetchedAt>now) throw new GatewayError(503,'route_unavailable',15);
   const routes=[];
   for(const candidate of configuration.routes??[]) {
     try {
-      const route=activeRoute(configuration,candidate.id,now);
+      const route=resolveRoute(configuration,candidate.id,now);
       routes.push({id:route.id,provider:route.provider,model:route.model,disclosureVersion:route.disclosureVersion,...(route.profile?{profile:route.profile,reasoning:route.reasoning,label:route.label}: {})});
     } catch(error) { if(!(error instanceof GatewayError)) throw error; }
   }
@@ -51,8 +53,30 @@ export function cachedConfiguration(load,{now=()=>Date.now()}={}) {
 export async function verifyAttestation(appCheck, token, allowedAppIDs) {
   if (typeof token !== 'string' || token.length > 8192) throw new GatewayError(401,'attestation_required');
   let claims;
-  try { claims = await appCheck.verifyToken(token,{consume:true}); } catch { throw new GatewayError(401,'attestation_invalid'); }
+  try { claims = await appCheck.verifyToken(token,{consume:true}); } catch(error) {
+    if(error instanceof GatewayError)throw error;
+    if(['app-check/permission-denied','app-check/internal-error','app-check/unknown-error'].includes(error?.code))throw new GatewayError(503,'attestation_unavailable');
+    throw new GatewayError(401,'attestation_invalid');
+  }
   if (claims.alreadyConsumed || !allowedAppIDs.includes(claims.appId)) throw new GatewayError(401,'attestation_invalid');
+}
+
+export function firestoreAttestationVerifier(appCheck,database,allowedAppIDs) {
+  return {
+    async verifyToken(token,options) {
+      const claims=await appCheck.verifyToken(token,options);
+      if(claims.alreadyConsumed || !allowedAppIDs.includes(claims.appId))return claims;
+      // Some token types omit prior consumption. Store only a digest to enforce it atomically.
+      const digest=createHash('sha256').update(token).digest('hex');
+      try {
+        await database.collection('appCheckTokens').doc(digest).create({expiresAt:new Date(Date.now()+8*86400_000)});
+      } catch(error) {
+        if(error?.code===6 || error?.code==='already-exists')return {...claims,alreadyConsumed:true};
+        throw new GatewayError(503,'attestation_unavailable');
+      }
+      return claims;
+    }
+  };
 }
 
 // Transactions reserve fleet-wide credits; a lost response wastes credits, never replenishes them.
@@ -77,9 +101,9 @@ export class DailyQuota {
     this.#queue = work.catch(() => {}); return work;
   }
 }
-export function firestoreReservation(database) {
+export function firestoreReservation(database,collection='generationQuotas') {
   return (day,batch,limit) => database.runTransaction(async tx => {
-    const reference = database.collection('generationQuotas').doc(day);
+    const reference = database.collection(collection).doc(day);
     const snapshot = await tx.get(reference);
     const used = snapshot.exists ? snapshot.data().reserved : 0;
     if (!Number.isSafeInteger(used) || used < 0) throw new GatewayError(503,'quota_unavailable');

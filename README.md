@@ -59,3 +59,22 @@ Edit `infrastructure/model-catalog.json`, increment its version, then run `node 
 `node render-model-routes.mjs infrastructure/model-catalog.json infrastructure/model-pricing.json OUTPUT` generates disabled runtime routes and an issuer policy. Update the private gateway and issuer configuration with matching reviewed weights. New model names within existing text-only provider profiles need no iOS update. New providers, privacy profiles or unsupported API features require code/disclosure review. Remote entries cannot supply URLs, credentials, tools or persistence settings. Endpoints stay compiled. Adapters discard internal thinking/signatures, verify serving models, cap output and require zero cache use. Generic profiles use conservative byte budgets until live framing is proved. Contract failures quarantine the provider and attempt the shared disable switch.
 
 The draft $9.99 plan now has a $1 model-cost allowance per verified renewal and a $0.20 lifetime free allowance (5× usage). This targets approximately 7–8.5× net revenue/model-cost ratios after illustrative Apple fees, before other expenses. The disabled campaign caps free model reservations at $200 across at most 1,000 claims. UI language uses percentage remaining. Validate current rates and actual costs before activation.
+
+## Subscriber dictation
+
+The paid gateway accepts up to 60 seconds of 16 kHz mono PCM WAV at
+`POST /v1/dictation`. It requires a fresh App Check token and a single-use
+`openai-whisper-dictation` voucher. The paid issuer reserves 6,000 microdollars
+($0.006) per attempt against the same allowance as cloud chat. The trial issuer
+has no dictation route.
+
+To activate, first verify the subscription products and purchase, restore, and
+revocation flows. Set `openAIDictation: true` in the billing issuer's Apple
+configuration, `OPENAI_DICTATION_ENABLED=true` in the production gateway, and
+`dictationEnabled: true` in its `runtime/gateway` document. The public policy
+advertises `dictationUnits` only when the paid issuer offers this route.
+Internal beta builds use the separate shared-budget chat gateway.
+
+The hosted adapter uses OpenAI `whisper-1`. Check OpenAI's published
+deprecation schedule before enabling the service. The iOS device independently
+downloads Whisper Small English and runs transcription offline.

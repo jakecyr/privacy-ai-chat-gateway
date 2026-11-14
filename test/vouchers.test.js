@@ -76,3 +76,19 @@ test('calendar rollover cannot replenish paid allowance; a verified renewal can'
  assert.equal(records.size,2);
  assert.equal(JSON.stringify([...records]).includes('PRIVATE_'),false);
 });
+
+test('the verified Apple product selects its own monthly allowance',async()=>{
+ const reservations=[];
+ const productIDs={basic:100,pro:200,plus:400};
+ const issuer=voucherIssuer({
+  verifyTransaction:async productID=>({active:true,productID,expiresAt:3000,originalTransactionID:'subscription',periodTransactionID:'period'}),
+  reserve:async value=>reservations.push(value),privateKey,kid:'v1',issuer:'billing',audience:'chat',hmacKey:'secret',
+  routeCosts:{terra:10},monthlyUnits:400,monthlyUnitsByProduct:productIDs,now:()=>1000,
+ });
+ for(const productID of Object.keys(productIDs)) {
+  await issuer({signedTransaction:productID,route:'terra',count:1,productID:'plus'});
+ }
+ assert.deepEqual(reservations.map(reservation=>reservation.limit),[100,200,400]);
+ await assert.rejects(issuer({signedTransaction:'unknown',route:'terra',count:1}),{code:'subscription_inactive'});
+ assert.equal(reservations.length,3);
+});

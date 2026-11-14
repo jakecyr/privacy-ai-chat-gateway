@@ -1,12 +1,14 @@
+import { openAIDictation } from './dictation.js';
 import {readFile} from 'node:fs/promises';
 import {createHash,createPublicKey} from 'node:crypto';
 import {initializeApp,applicationDefault} from 'firebase-admin/app';
 import {getAppCheck} from 'firebase-admin/app-check';
 import {getFirestore} from 'firebase-admin/firestore';
 import {createProductionServer,createAttestationOnlyServer} from './production-server.js';
-import {DailyQuota,firestoreReservation,cachedConfiguration} from './admission.js';
+import {DailyQuota,firestoreReservation,cachedConfiguration,firestoreAttestationVerifier} from './admission.js';
 import {firestoreVoucherSpender,verifyVoucher} from './vouchers.js';
 import {openAIAdapter} from './openai-adapter.js';
+import {createOpenAIBetaServer} from './openai-beta.js';
 import {claudeAdapter} from './claude-adapter.js';
 import {geminiAdapter} from './gemini-adapter.js';
 import {GoogleAuth} from 'google-auth-library';
@@ -23,6 +25,12 @@ async function start() {
     listen(createAttestationOnlyServer({appCheck:getAppCheck(app),allowedAppIDs:appIDs}));return;
   }
   const keyFile=process.env.OPENAI_KEY_FILE;
+  if(process.env.OPENAI_TESTFLIGHT_BETA==='true') {
+    const app=initializeApp({credential:applicationDefault(),projectId:projectID});
+    const apiKey=(await readFile(keyFile,'utf8')).trim();
+    listen(createOpenAIBetaServer({appCheck:getAppCheck(app),allowedAppIDs:appIDs,database:getFirestore(app),
+      apiKey,expiresAt:Date.parse(process.env.OPENAI_BETA_EXPIRES_AT)}));return;
+  }
   const publicKeyFile=process.env.VOUCHER_PUBLIC_KEYS_FILE;
   if(!publicKeyFile || !process.env.VOUCHER_ISSUER || !process.env.VOUCHER_AUDIENCE) throw new Error('configuration_missing');
   const encodedKeys=JSON.parse(await readFile(publicKeyFile,'utf8'));
@@ -30,14 +38,19 @@ async function start() {
   if(!Object.keys(publicKeys).length || Object.values(publicKeys).some(key=>key.asymmetricKeyType!=='ed25519')) throw new Error('configuration_missing');
   const app=initializeApp({credential:applicationDefault(),projectId:projectID});
   const database=getFirestore(app);
-  const quota=new DailyQuota({reserve:firestoreReservation(database)});
+  const sandbox=process.env.APP_STORE_SANDBOX==='true';
+  const registry=database.doc(sandbox?'runtime/gatewaySandbox':'runtime/gateway');
+  const quota=new DailyQuota({reserve:firestoreReservation(database,sandbox?'sandboxGenerationQuotas':'generationQuotas'),
+    ...(sandbox?{dailyLimit:20,batch:4}:{})});
   const registrations=new Map();
-  const disable=()=>database.doc('runtime/gateway').update({enabled:false,disabledFor:'provider_contract'});
+  const disable=()=>registry.update({enabled:false,disabledFor:'provider_contract'});
   const register=(spec,generate,target)=>{const registration={generate,target,targetDigest:providerTargetDigest(spec,target)};registrations.set(spec.id,registration);registrations.set(spec.provider,registration);};
   const readCredential=async path=>(await readFile(path,'utf8')).trim();
   const fingerprint=key=>createHash('sha256').update(key).digest('hex');
+  let dictate;
   if(keyFile) {
     const key=await readCredential(keyFile);
+    if (process.env.OPENAI_DICTATION_ENABLED === "true") dictate = openAIDictation({ apiKey: key });
     register(OPENAI_SPEC,openAIAdapter({apiKey:key,onUsageViolation:disable}),{credentialSHA256:fingerprint(key)});
   }
   if(process.env.CLAUDE_KEY_FILE) {
@@ -53,13 +66,13 @@ async function start() {
   if(!registrations.size)throw new Error('provider_configuration_missing');
   const dispatcher=createProviderDispatcher(registrations);
   const configuration=dispatcher.configuration(cachedConfiguration(async()=>{
-      const snapshot=await database.doc('runtime/gateway').get();
+      const snapshot=await registry.get();
       if(!snapshot.exists) throw new Error();
       return snapshot.data();
   }));
   const server=createProductionServer({
-    appCheck:getAppCheck(app),allowedAppIDs:appIDs,configuration,quota,
-    generate:dispatcher.generate,
+    appCheck:firestoreAttestationVerifier(getAppCheck(app),database,appIDs),allowedAppIDs:appIDs,configuration,quota,
+    generate:dispatcher.generate,dictate,
     validateVoucher:(token,route)=>verifyVoucher(token,{publicKeys,issuer:process.env.VOUCHER_ISSUER,audience:process.env.VOUCHER_AUDIENCE,route:route.id}),
     spendVoucher:firestoreVoucherSpender(database,{publicKeys,issuer:process.env.VOUCHER_ISSUER,audience:process.env.VOUCHER_AUDIENCE}),
   });

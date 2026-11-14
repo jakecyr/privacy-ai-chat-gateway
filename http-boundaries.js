@@ -18,7 +18,7 @@ export async function abortable(operation,signal) {
   } finally { signal.removeEventListener('abort',onAbort); }
 }
 
-export async function readJSON(request,{limit,signal}) {
+export async function readBytes(request,{limit,signal}) {
   let length=0;const chunks=[],iterator=request[Symbol.asyncIterator]();
   while(true) {
     const {done,value}=await abortable(()=>iterator.next(),signal);
@@ -27,7 +27,12 @@ export async function readJSON(request,{limit,signal}) {
     if(length>limit)throw new GatewayError(413,'invalid_request');
     chunks.push(value);
   }
-  try{return JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(Buffer.concat(chunks)));}
+  return Buffer.concat(chunks);
+}
+
+export async function readJSON(request, options) {
+  const bytes = await readBytes(request, options);
+  try{return JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));}
   catch{throw new GatewayError(400,'invalid_request');}
 }
 

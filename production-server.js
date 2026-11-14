@@ -3,6 +3,8 @@ import { once } from 'node:events';
 import { GatewayError, activeRoute, publicModels, validateRequest, verifyAttestation } from './admission.js';
 import {validateProviderInputBudget} from './provider-dispatcher.js';
 import {abortable,readJSON,textChunks} from './http-boundaries.js';
+import { DICTATION_ROUTE, MAX_WAV_BYTES, readDictation } from './dictation.js';
+import {legacyCompatibleRoute} from './route-specs.js';
 
 // Explicit release-verification mode: no provider, database, quota or billing dependencies.
 // There is no request-controlled transition out of this mode.
@@ -14,8 +16,22 @@ export function createAttestationOnlyServer({appCheck,allowedAppIDs}) {
 }
 
 // All production dependencies are explicit; no development verifier can be selected by request data.
-export function createProductionServer({appCheck, allowedAppIDs, configuration, quota, generate, validateVoucher, spendVoucher,deadlineMS=60000}) {
-  if (!appCheck || !allowedAppIDs?.length || !configuration || !quota || !generate || !validateVoucher || !spendVoucher) throw new Error('missing_dependencies');
+export function createProductionServer({appCheck, allowedAppIDs, configuration, quota, generate, validateVoucher, spendVoucher,dictate,deadlineMS=60000}) {
+  if (!quota || !validateVoucher || !spendVoucher) throw new Error('missing_dependencies');
+  const admit=async(request,route,signal)=>{
+    const authorization=request.headers.authorization;
+    if(typeof authorization!=='string'||!authorization.startsWith('Bearer ')||authorization.length>8192) throw new GatewayError(401,'access_required');
+    const token=authorization.slice(7);
+    // Invalid signatures must not drain fleet admission credits.
+    await abortable(()=>validateVoucher(token,route),signal);
+    await abortable(()=>quota.take(),signal);
+    await abortable(()=>spendVoucher(token,route),signal);
+  };
+  return createChatServer({appCheck,allowedAppIDs,configuration,resolveRoute:activeRoute,generate,admit,dictate,deadlineMS});
+}
+
+export function createChatServer({appCheck,allowedAppIDs,configuration,resolveRoute,generate,admit,dictate,catalogHeaders=()=>({}),deadlineMS=60000}) {
+  if (!appCheck || !allowedAppIDs?.length || !configuration || !resolveRoute || !generate || !admit) throw new Error('missing_dependencies');
   if(!Number.isInteger(deadlineMS)||deadlineMS<1||deadlineMS>60000) throw new Error('invalid_deadline');
   const server = http.createServer(async (request,response) => {
     const abort = new AbortController();
@@ -32,8 +48,22 @@ export function createProductionServer({appCheck, allowedAppIDs, configuration, 
     try {
       if (request.method === 'GET' && request.url === '/health') { response.writeHead(200,{'Cache-Control':'no-store'}); response.end('ready'); return; }
       if (request.method === 'GET' && request.url === '/v1/models') {
-        const models=publicModels(await abortable(configuration,abort.signal));
-        response.writeHead(200,{'Content-Type':'application/json','Cache-Control':'no-store'});response.end(JSON.stringify(models));return;
+        const config=await abortable(configuration,abort.signal);
+        const models=publicModels(config,Date.now(),resolveRoute);
+        if(request.headers['x-privatechat-model-policy']!=='2')models.routes=models.routes.filter(legacyCompatibleRoute);
+        response.writeHead(200,{'Content-Type':'application/json','Cache-Control':'no-store','Vary':'X-PrivateChat-Model-Policy',...catalogHeaders(config)});response.end(JSON.stringify(models));return;
+      }
+      if (request.method === 'POST' && request.url === '/v1/dictation' && dictate) {
+        if (Number(request.headers['content-length']) > MAX_WAV_BYTES) throw new GatewayError(413, 'invalid_request');
+        await abortable(() => verifyAttestation(appCheck, request.headers['x-firebase-appcheck'], allowedAppIDs), abort.signal);
+        const config = await abortable(configuration, abort.signal);
+        if (config?.enabled !== true || config.dictationEnabled !== true) throw new GatewayError(503, 'route_unavailable');
+        const wav = await readDictation(request, abort.signal);
+        await abortable(() => admit(request, DICTATION_ROUTE, abort.signal), abort.signal);
+        const text = await abortable(() => dictate(wav, abort.signal), abort.signal);
+        response.writeHead(200, {'Content-Type':'application/json','Cache-Control':'no-store'});
+        response.end(JSON.stringify({ text }));
+        return;
       }
       const connectionCheck=request.url==='/v1/attestation/check';
       if (request.method !== 'POST' || (request.url !== '/v1/chat/stream' && !connectionCheck)) throw new GatewayError(404,'not_found');
@@ -48,19 +78,12 @@ export function createProductionServer({appCheck, allowedAppIDs, configuration, 
         response.end(JSON.stringify({verified:true}));return;
       }
       const body=validateRequest(await readJSON(request,{limit:32768,signal:abort.signal}));
-      const route = activeRoute(await abortable(configuration,abort.signal),body.route);
+      const route = resolveRoute(await abortable(configuration,abort.signal),body.route);
       if (body.disclosureVersion !== route.disclosureVersion) throw new GatewayError(409,'disclosure_changed');
       validateProviderInputBudget(route,body);
-      const authorization = request.headers.authorization;
-      if (typeof authorization !== 'string' || !authorization.startsWith('Bearer ') || authorization.length > 8192) throw new GatewayError(401,'access_required');
-      // Invalid signatures must not drain fleet admission credits.
-      await abortable(()=>validateVoucher(authorization.slice(7),route),abort.signal);
+      const usageHeaders=await abortable(()=>admit(request,route,abort.signal),abort.signal);
       if(abort.signal.aborted) throw new GatewayError(503,'upstream_timeout');
-      // Spending is conservative: failed attempts may consume a voucher and a quota credit.
-      await abortable(()=>quota.take(),abort.signal);
-      await abortable(()=>spendVoucher(authorization.slice(7),route),abort.signal);
-      if(abort.signal.aborted) throw new GatewayError(503,'upstream_timeout');
-      response.writeHead(200,{'Content-Type':'text/event-stream; charset=utf-8','Cache-Control':'no-store','X-Accel-Buffering':'no'});
+      response.writeHead(200,{'Content-Type':'text/event-stream; charset=utf-8','Cache-Control':'no-store','X-Accel-Buffering':'no',...usageHeaders});
       await send('meta',{route:route.id,disclosureVersion:route.disclosureVersion});
       heartbeat = setInterval(() => { if (Date.now()-lastWrite>=15000 && !response.writableNeedDrain && !response.destroyed) { response.write(': heartbeat\n\n');lastWrite=Date.now(); } },15000); heartbeat.unref();
       let count = 0, terminal = false;

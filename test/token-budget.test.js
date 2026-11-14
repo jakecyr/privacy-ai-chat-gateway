@@ -1,3 +1,5 @@
+import {openAIPayload} from '../openai-payload.js';
+import {openAIBetaRoutes} from '../openai-beta.js';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {estimatedOpenAIInputTokens,validateInputBudget,validateOpenAIUsage,maximumInferenceMicroUSD,validateIssuerCreditPolicy,OPENAI_BUDGET} from '../token-budget.js';
@@ -14,6 +16,17 @@ test('token budget counts quoted memories and treats special-token spellings as 
   assert.equal(maximumInferenceMicroUSD(),79936);
   assert.ok(OPENAI_BUDGET.reservationMicroUSD>=maximumInferenceMicroUSD());
 });
+test('the dynamic OpenAI input ceiling includes system instructions and framing',()=>{
+ const route=openAIBetaRoutes[0];
+ const input={memory:[],messages:[{role:'user',text:''}]};
+ const instructions=openAIPayload(input,route).instructions;
+ const maximumUserBytes=route.inputTokens-1024-Buffer.byteLength(instructions);
+ input.messages[0].text='a'.repeat(maximumUserBytes);
+ assert.equal(validateInputBudget(route,input),route.inputTokens);
+ input.messages[0].text+='a';
+ assert.throws(()=>validateInputBudget(route,input),{code:'input_limit'});
+});
+
 test('pathological text exceeding token budget is rejected without any provider dispatch',async()=>{
   let calls=0;
   const large={messages:[{role:'user',text:'\x7f'.repeat(32500)}],memory:[]};
